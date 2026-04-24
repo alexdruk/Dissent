@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment — never commit API keys
+.env
+
+# Detailed setup doc (rename to whatever you prefer)
+SETUP.md
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime
+pids/
+*.pid

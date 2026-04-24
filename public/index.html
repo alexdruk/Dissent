@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dissent — Adversarial Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;800&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0B0B0C;
+      --surface:     #131315;
+      --surface2:    #1C1C1F;
+      --border:      #26262B;
+      --border2:     #36363D;
+      --text:        #E5E3DD;
+      --text2:       #888680;
+      --text3:       #4E4D4A;
+      --accent:      #E8C03A;
+      --accent-dim:  rgba(232,192,58,0.10);
+      --accent-bdr:  rgba(232,192,58,0.28);
+      --danger:      #E05A4A;
+      --success:     #4ABA7A;
+      --col-a:       #6B9FE4;
+      --col-b:       #E47B6B;
+      --col-c:       #E4AD6B;
+      --col-d:       #7BE4B8;
+      --col-s:       #B46BE4;
+      --r:           6px;
+      --rl:          10px;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'Barlow', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      background: var(--bg);
+      color: var(--text);
+      background-image:
+        radial-gradient(ellipse at 15% 60%, rgba(232,192,58,0.035) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 15%, rgba(107,159,228,0.025) 0%, transparent 50%);
+    }
+
+    h1,h2,h3,h4 {
+      font-family: 'Barlow Condensed', system-ui, sans-serif;
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Nav ── */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(11,11,12,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 19px;
+      letter-spacing: 0.07em; color: var(--text);
+    }
+    .logo em { color: var(--accent); font-style: normal; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 0.06em;
+      padding: 5px 13px; border-radius: var(--r);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .nav-btn:hover { border-color: var(--text2); color: var(--text); }
+    #btn-reset { display: none; }
+
+    /* ── Stage system ── */
+    .stage { display: none; min-height: 100vh; padding-top: 52px; }
+    .stage.active { display: block; }
+
+    /* ── STAGE 1: Landing ── */
+    #stage-landing.active {
+      display: flex; flex-direction: column;
+      align-items: center;
+    }
+    .land-inner {
+      width: 100%; max-width: 680px;
+      padding: 64px 24px 48px;
+    }
+    .eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 14px;
+    }
+    .land-title { font-size: 56px; margin-bottom: 14px; }
+    .land-title em { color: var(--accent); font-style: normal; }
+    .land-sub {
+      font-size: 16px; color: var(--text2);
+      margin-bottom: 40px; max-width: 540px; line-height: 1.7;
+    }
+    .steps {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 36px;
+    }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      padding: 14px 16px;
+    }
+    .step-n {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; color: var(--accent);
+      margin-bottom: 5px;
+    }
+    .step-h {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 14px;
+      color: var(--text); margin-bottom: 3px;
+    }
+    .step-d { font-size: 12px; color: var(--text2); line-height: 1.45; }
+
+    #doc-input {
+      width: 100%; min-height: 220px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.7;
+      padding: 16px 18px; resize: vertical;
+      outline: none; transition: border-color .2s;
+      margin-bottom: 10px;
+    }
+    #doc-input:focus { border-color: var(--border2); }
+    #doc-input::placeholder { color: var(--text3); }
+
+    .input-foot {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--text3);
+      margin-bottom: 14px;
+    }
+    #wc { color: var(--text2); }
+    #wc.warn { color: var(--danger); }
+
+    .inline-err {
+      display: none;
+      background: rgba(224,90,74,0.10);
+      border: 1px solid rgba(224,90,74,0.22);
+      border-radius: var(--r);
+      color: #F09080; font-size: 13px;
+      padding: 10px 14px; margin-bottom: 12px;
+    }
+
+    #btn-go {
+      width: 100%;
+      background: var(--accent); color: #0B0B0C;
+      border: none; border-radius: var(--rl);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 17px;
+      letter-spacing: 0.05em;
+      padding: 15px; cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    #btn-go:hover:not(:disabled) { opacity: 0.88; }
+    #btn-go:active:not(:disabled) { transform: scale(0.992); }
+    #btn-go:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Loading screens ── */
+    #stage-gap-loading.active,
+    #stage-sum-loading.active {
+      display: flex; align-items: center; justify-content: center;
+    }
+    .load-box { text-align: center; }
+    .spinner {
+      width: 34px; height: 34px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto 18px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .load-h {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 22px;
+      color: var(--text); margin-bottom: 5px;
+    }
+    .load-s { font-size: 13px; color: var(--text2); }
+
+    /* ── STAGE 3: Gap Review ── */
+    #stage-gap-review.active { display: block; }
+    .gap-inner { max-width: 700px; margin: 0 auto; padding: 44px 24px 60px; }
+    .gap-hdr { margin-bottom: 22px; }
+    .tag {
+      display: inline-block;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-bdr);
+      color: var(--accent);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .gap-title { font-size: 30px; margin-bottom: 6px; }
+    .gap-sub { font-size: 14px; color: var(--text2); line-height: 1.55; max-width: 560px; }
+
+    .prog-track {
+      height: 2px; background: var(--border);
+      border-radius: 2px; margin: 20px 0;
+      overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 2px; transition: width .3s ease;
+    }
+
+    #gap-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+
+    .gcard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .gcard.accepted { border-color: rgba(74,186,122,0.35); }
+    .gcard.skipped  { opacity: .42; }
+
+    .gcard-hdr {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px; cursor: pointer; user-select: none;
+    }
+    .gcard-icon {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 13px;
+      flex-shrink: 0;
+      background: var(--surface2); color: var(--accent);
+      transition: background .2s, color .2s;
+    }
+    .gcard.accepted .gcard-icon { background: rgba(74,186,122,0.14); color: var(--success); }
+    .gcard.skipped  .gcard-icon { color: var(--text3); }
+
+    .gcard-meta { flex: 1; min-width: 0; }
+    .gcard-name { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
+    .gcard-why  { font-size: 12px; color: var(--text2); line-height: 1.45; }
+    .gcard-tags { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+
+    .pill {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em;
+      padding: 2px 9px; border-radius: 20px; border: 1px solid;
+    }
+    .pill-missing { background: rgba(224,90,74,0.12); color: #F09080; border-color: rgba(224,90,74,0.28); }
+    .pill-weak    { background: rgba(107,159,228,0.12); color: #9BBEF8; border-color: rgba(107,159,228,0.28); }
+    .pill-ok      { background: rgba(74,186,122,0.12); color: var(--success); border-color: rgba(74,186,122,0.28); }
+    .pill-skip    { background: var(--surface2); color: var(--text3); border-color: var(--border2); }
+
+    .gcard-chev { color: var(--text3); font-size: 11px; flex-shrink: 0; padding-top: 3px; }
+
+    .gcard-body { display: none; padding: 0 16px 16px; }
+    .gcard-body.open { display: block; }
+
+    .draft-lbl {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 8px;
+    }
+    .draft-ta {
+      width: 100%; min-height: 120px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif; font-size: 13px; line-height: 1.65;
+      padding: 11px 13px; resize: vertical;
+      outline: none; transition: border-color .2s;
+    }
+    .draft-ta:focus { border-color: var(--border); }
+
+    .card-acts { display: flex; gap: 7px; margin-top: 10px; }
+    .btn-ok, .btn-skip-c, .btn-undo-c {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 13px;
+      letter-spacing: 0.04em;
+      padding: 7px 16px; border-radius: var(--r);
+      border: 1px solid; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-ok     { background: rgba(74,186,122,0.11); color: var(--success); border-color: rgba(74,186,122,0.28); }
+    .btn-skip-c { background: var(--surface2); color: var(--text2); border-color: var(--border2); }
+    .btn-undo-c { background: var(--surface2); color: var(--text3); border-color: var(--border); font-size: 12px; }
+    .btn-ok:hover, .btn-skip-c:hover, .btn-undo-c:hover { opacity: .78; }
+
+    .gap-foot {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .gap-foot-ct { font-size: 13px; color: var(--text2); }
+    #btn-gap-submit {
+      background: var(--accent); color: #0B0B0C;
+      border: none; border-radius: var(--rl);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 15px;
+      letter-spacing: 0.05em;
+      padding: 11px 26px; cursor: pointer;
+      transition: opacity .15s;
+    }
+    #btn-gap-submit:disabled { opacity: .32; cursor: not-allowed; }
+    #btn-gap-submit:not(:disabled):hover { opacity: .88; }
+
+    /* ── STAGE 5: Analysing ── */
+    #stage-analysing.active {
+      display: flex; align-items: flex-start; justify-content: center;
+    }
+    .run-inner {
+      max-width: 600px; width: 100%;
+      padding: 56px 24px;
+    }
+    .run-eyebrow {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 8px;
+    }
+    .run-title { font-size: 30px; margin-bottom: 28px; }
+
+    .rchips { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; }
+    .rchip {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      padding: 13px 15px;
+      transition: border-color .3s;
+    }
+    .rchip.running  { border-color: var(--rc, var(--accent-bdr)); }
+    .rchip.complete { border-color: rgba(74,186,122,0.28); }
+    .rchip.err      { border-color: rgba(224,90,74,0.28); }
+
+    .rchip-letter {
+      width: 32px; height: 32px; border-radius: 7px;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 14px;
+      color: var(--rc, var(--text3));
+      flex-shrink: 0; transition: background .3s;
+    }
+    .rchip.running  .rchip-letter,
+    .rchip.complete .rchip-letter { background: color-mix(in srgb, var(--rc, #888) 14%, transparent); }
+
+    .rchip-info { flex: 1; }
+    .rchip-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 15px; color: var(--text);
+    }
+    .rchip-st { font-size: 12px; color: var(--text3); margin-top: 1px; }
+    .rchip.running  .rchip-st { color: var(--rc, var(--text2)); }
+    .rchip.complete .rchip-st { color: var(--success); }
+    .rchip.err      .rchip-st { color: var(--danger); }
+
+    .rchip-ind { font-size: 14px; color: var(--text3); }
+    .rchip.running .rchip-ind { animation: blink 1.1s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+    .synth-chip {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      padding: 13px 15px;
+      transition: border-color .3s;
+      margin-top: 9px;
+    }
+    .synth-chip.running { border-color: rgba(180,107,228,0.38); }
+    .synth-icon {
+      width: 32px; height: 32px; border-radius: 7px;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+      transition: background .3s;
+    }
+    .synth-chip.running .synth-icon { background: rgba(180,107,228,0.14); }
+    .synth-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 15px;
+    }
+    .synth-st { font-size: 12px; color: var(--text3); margin-top: 1px; }
+    .synth-chip.running .synth-st { color: var(--col-s); animation: blink 1.1s ease-in-out infinite; }
+
+    /* ── STAGE 6: Results ── */
+    #stage-results.active { display: block; }
+
+    .res-hdr {
+      max-width: 960px; margin: 0 auto;
+      padding: 32px 28px 0;
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    .res-title { font-size: 30px; }
+    .res-meta  { font-size: 13px; color: var(--text2); margin-top: 3px; }
+    .btn-new {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 0.06em;
+      padding: 8px 15px; border-radius: var(--r);
+      cursor: pointer; transition: color .15s, border-color .15s;
+      flex-shrink: 0; margin-top: 4px;
+    }
+    .btn-new:hover { color: var(--text); border-color: var(--text2); }
+
+    .tab-bar {
+      max-width: 960px; margin: 20px auto 0;
+      padding: 0 28px;
+      display: flex; gap: 2px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tbtn {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 13px;
+      letter-spacing: 0.04em;
+      padding: 10px 16px;
+      background: none; border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text2);
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+      white-space: nowrap;
+      position: relative; bottom: -1px;
+    }
+    .tbtn:hover { color: var(--text); }
+    .tbtn.on { color: var(--tc, var(--accent)); border-bottom-color: var(--tc, var(--accent)); }
+    .tbtn-letter {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 4px;
+      background: var(--surface2);
+      font-size: 10px; margin-right: 6px;
+      color: var(--tc, var(--text2));
+    }
+    .tbtn.on .tbtn-letter { background: color-mix(in srgb, var(--tc, #888) 16%, transparent); }
+
+    .tab-panels { max-width: 960px; margin: 0 auto; padding: 0 28px 80px; }
+    .tpanel { display: none; padding: 26px 0; }
+    .tpanel.on { display: block; }
+
+    .panel-bar {
+      display: flex; justify-content: flex-end; margin-bottom: 16px;
+    }
+    .btn-copy {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 0.05em;
+      padding: 6px 14px; border-radius: var(--r);
+      cursor: pointer; transition: color .15s, border-color .15s;
+    }
+    .btn-copy:hover       { color: var(--text); border-color: var(--text2); }
+    .btn-copy.done        { color: var(--success); border-color: var(--success); }
+
+    /* Rendered markdown */
+    .mdc { color: var(--text); font-size: 15px; line-height: 1.8; }
+    .mdc h2 {
+      font-size: 21px; color: var(--text);
+      margin: 28px 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mdc h2:first-child { margin-top: 0; }
+    .mdc h3 { font-size: 16px; color: var(--text); margin: 20px 0 7px; }
+    .mdc h4 { font-size: 14px; color: var(--text2); margin: 16px 0 5px; }
+    .mdc p  { margin-bottom: 13px; }
+    .mdc strong { font-weight: 500; }
+    .mdc em     { font-style: italic; color: var(--text2); }
+    .mdc ul, .mdc ol { padding-left: 20px; margin-bottom: 13px; }
+    .mdc li { margin-bottom: 4px; }
+    .mdc hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .mdc code {
+      font-family: 'Courier New', monospace; font-size: 12.5px;
+      background: var(--surface2); padding: 1px 5px; border-radius: 3px;
+      color: var(--accent);
+    }
+
+    /* Synthesis panel — purple accent on h2 */
+    .synth-panel .mdc h2 {
+      color: var(--col-s);
+      border-bottom-color: rgba(180,107,228,0.2);
+    }
+
+    /* ── STAGE 3.5: Synthesised document ── */
+    #stage-synth-doc.active {
+      display: flex; align-items: flex-start; justify-content: center;
+    }
+    .sdoc-inner {
+      max-width: 700px; width: 100%;
+      padding: 44px 24px 60px;
+    }
+    .sdoc-hdr { margin-bottom: 20px; }
+    .sdoc-title { font-size: 28px; margin-bottom: 6px; }
+    .sdoc-sub { font-size: 14px; color: var(--text2); line-height: 1.55; max-width: 540px; }
+    .sdoc-actions {
+      display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .btn-sdoc {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 13px;
+      letter-spacing: 0.04em;
+      padding: 8px 18px; border-radius: var(--r);
+      border: 1px solid; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-sdoc-save {
+      background: rgba(74,186,122,0.11); color: var(--success);
+      border-color: rgba(74,186,122,0.28);
+    }
+    .btn-sdoc-copy {
+      background: var(--surface); color: var(--text2);
+      border-color: var(--border2);
+    }
+    .btn-sdoc-continue {
+      background: var(--accent); color: #0B0B0C;
+      border-color: var(--accent);
+      margin-left: auto;
+    }
+    .btn-sdoc:hover { opacity: .80; }
+    .btn-sdoc.done  { color: var(--success); border-color: rgba(74,186,122,0.28); }
+    .sdoc-body {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      padding: 22px 24px;
+      font-size: 14px; line-height: 1.75;
+      color: var(--text2);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 60vh; overflow-y: auto;
+    }
+    .sdoc-note {
+      font-size: 12px; color: var(--text3);
+      margin-top: 12px;
+    }
+
+    /* AI-suggested additions */
+    .sdoc-additions { margin-top: 20px; }
+    .sdoc-additions-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 10px;
+    }
+    .sdoc-addition {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--rl) var(--rl) 0;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .sdoc-addition-hdr {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px 8px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .sdoc-ai-pill {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-bdr);
+      color: var(--accent);
+      padding: 2px 8px; border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .sdoc-addition-name {
+      font-weight: 500; font-size: 13px; color: var(--text);
+    }
+    .sdoc-addition-body {
+      padding: 12px 14px;
+      font-size: 13px; line-height: 1.7;
+      color: var(--text2);
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* ── Input mode tabs ── */
+    .input-tabs {
+      display: flex; gap: 2px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 3px;
+      margin-bottom: 12px;
+      width: fit-content;
+    }
+    .itab {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 0.05em;
+      padding: 5px 14px; border-radius: 4px;
+      border: none; background: none;
+      color: var(--text2); cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .itab.on { background: var(--surface2); color: var(--text); }
+    .itab:hover:not(.on) { color: var(--text); }
+
+    /* ── Drop zone ── */
+    #drop-zone {
+      display: none;
+      border: 1.5px dashed var(--border2);
+      border-radius: var(--rl);
+      background: var(--surface);
+      padding: 36px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    #drop-zone.dragover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    #drop-zone.has-file {
+      border-style: solid;
+      border-color: rgba(74,186,122,0.4);
+      cursor: default;
+    }
+    #drop-zone.upload-err {
+      border-color: rgba(224,90,74,0.4);
+    }
+    #file-input { display: none; }
+
+    .dz-idle, .dz-uploading, .dz-done, .dz-error { display: none; }
+    #drop-zone.idle     .dz-idle     { display: block; }
+    #drop-zone.uploading .dz-uploading { display: block; }
+    #drop-zone.has-file  .dz-done    { display: block; }
+    #drop-zone.upload-err .dz-error  { display: block; }
+
+    .dz-icon {
+      font-size: 26px; margin-bottom: 10px;
+      opacity: 0.5;
+    }
+    .dz-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 15px;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .dz-hint { font-size: 12px; color: var(--text3); line-height: 1.5; }
+    .dz-hint strong { color: var(--text2); font-weight: 500; }
+
+    .dz-file-row {
+      display: flex; align-items: center; gap: 12px;
+      text-align: left;
+    }
+    .dz-file-icon {
+      width: 38px; height: 38px; border-radius: 8px;
+      background: rgba(74,186,122,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .dz-file-name {
+      font-weight: 500; font-size: 14px;
+      color: var(--text); margin-bottom: 2px;
+      word-break: break-all;
+    }
+    .dz-file-meta { font-size: 12px; color: var(--success); }
+    .dz-file-clear {
+      margin-left: auto; flex-shrink: 0;
+      background: none; border: 1px solid var(--border2);
+      color: var(--text3); font-size: 11px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; letter-spacing: .04em;
+      padding: 4px 10px; border-radius: 4px;
+      cursor: pointer; transition: color .15s, border-color .15s;
+    }
+    .dz-file-clear:hover { color: var(--danger); border-color: rgba(224,90,74,0.4); }
+
+    .dz-err-icon { font-size: 24px; margin-bottom: 8px; }
+    .dz-err-msg  { font-size: 13px; color: #F09080; margin-bottom: 8px; }
+    .dz-err-retry {
+      background: none; border: 1px solid rgba(224,90,74,0.3);
+      color: #F09080; font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 12px; letter-spacing: .05em;
+      padding: 5px 14px; border-radius: var(--r); cursor: pointer;
+    }
+    .dz-err-retry:hover { background: rgba(224,90,74,0.08); }
+
+    .dz-spin {
+      width: 28px; height: 28px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    /* Security badge row */
+    .sec-row {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .sec-badge {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 11px; color: var(--text3);
+      padding: 3px 10px;
+    }
+    .sec-badge span { font-size: 10px; }
+
+    /* ── Document type mode selector ── */
+    .mode-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text3); margin-bottom: 8px;
+    }
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    .mbtn {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      padding: 10px 6px 9px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      text-align: center;
+    }
+    .mbtn:hover { border-color: var(--border2); background: var(--surface2); }
+    .mbtn.on {
+      border-color: var(--accent-bdr);
+      background: var(--accent-dim);
+    }
+    .mbtn-icon { font-size: 18px; line-height: 1; }
+    .mbtn-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 11px;
+      color: var(--text2); line-height: 1.25;
+    }
+    .mbtn.on .mbtn-name { color: var(--accent); }
+    .mode-hint {
+      font-size: 12px; color: var(--text3);
+      margin-top: -14px; margin-bottom: 16px;
+      min-height: 16px; transition: color .15s;
+    }
+
+    @media (max-width: 600px) {
+      .mode-grid { grid-template-columns: repeat(3, 1fr); }
+      .mbtn-name { font-size: 10px; }
+      .steps { grid-template-columns: 1fr; }
+      .land-title { font-size: 40px; }
+      .tab-bar { padding: 0 16px; }
+      .tab-panels { padding: 0 16px 60px; }
+      .res-hdr { padding: 24px 16px 0; flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Persistent nav -->
+<nav id="nav">
+  <div class="logo">DISS<em>E</em>NT</div>
+  <div class="nav-right">
+    <button id="btn-reset" class="nav-btn" onclick="resetAll()">↺ New analysis</button>
+  </div>
+</nav>
+
+<!-- ── STAGE 1: Landing ─────────────────────────────────────────────────── -->
+<div id="stage-landing" class="stage">
+  <div class="land-inner">
+    <div class="eyebrow">Adversarial Analysis</div>
+    <h1 class="land-title">Find what's <em>wrong</em><br>with your plan.</h1>
+    <p class="land-sub">
+      Paste or upload any strategic document — a business plan, investment memo, product brief,
+      or decision proposal. Dissent fills structural gaps, then runs four simultaneous
+      adversarial analyses and synthesises the highest-confidence risks.
+    </p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">Step 01</div>
+        <div class="step-h">Gap review</div>
+        <div class="step-d">Missing sections identified &amp; drafted for your approval</div>
+      </div>
+      <div class="step">
+        <div class="step-n">Step 02</div>
+        <div class="step-h">Adversarial panel</div>
+        <div class="step-d">Four AI analysts attack your plan from distinct angles</div>
+      </div>
+      <div class="step">
+        <div class="step-n">Step 03</div>
+        <div class="step-h">Synthesis</div>
+        <div class="step-d">Cross-role convergence reveals highest-confidence risks</div>
+      </div>
+    </div>
+
+    <!-- Document type mode selector -->
+    <div class="mode-label">What type of document is this?</div>
+    <div class="mode-grid">
+      <button class="mbtn on" data-mode="startup"   onclick="selectMode('startup')">
+        <span class="mbtn-icon">🚀</span>
+        <span class="mbtn-name">Startup / investor plan</span>
+      </button>
+      <button class="mbtn" data-mode="decision"  onclick="selectMode('decision')">
+        <span class="mbtn-icon">⚖️</span>
+        <span class="mbtn-name">Decision brief</span>
+      </button>
+      <button class="mbtn" data-mode="technical" onclick="selectMode('technical')">
+        <span class="mbtn-icon">⚙️</span>
+        <span class="mbtn-name">Technical / product proposal</span>
+      </button>
+      <button class="mbtn" data-mode="strategy"  onclick="selectMode('strategy')">
+        <span class="mbtn-icon">🧭</span>
+        <span class="mbtn-name">Strategy / operations doc</span>
+      </button>
+      <button class="mbtn" data-mode="readme"    onclick="selectMode('readme')">
+        <span class="mbtn-icon">📄</span>
+        <span class="mbtn-name">Developer project / README</span>
+      </button>
+    </div>
+    <div class="mode-hint" id="mode-hint">Business plan, pitch deck, fundraising memo</div>
+
+    <!-- Input mode toggle -->
+    <div class="input-tabs">
+      <button class="itab on" id="tab-paste" onclick="setMode('paste')">Paste text</button>
+      <button class="itab"    id="tab-upload" onclick="setMode('upload')">Upload file</button>
+    </div>
+
+    <!-- Paste mode -->
+    <textarea id="doc-input"
+      placeholder="Paste your business plan, investment memo, strategy proposal, or decision brief here…&#10;&#10;Minimum 50 words. Any format."></textarea>
+
+    <!-- Upload mode -->
+    <div id="drop-zone" class="idle"
+         onclick="onDropZoneClick(event)"
+         ondragover="onDragOver(event)"
+         ondragleave="onDragLeave(event)"
+         ondrop="onDrop(event)">
+      <input type="file" id="file-input" accept=".txt,.md,.pdf,.docx" onchange="onFileChosen(event)">
+
+      <!-- idle state -->
+      <div class="dz-idle">
+        <div class="dz-icon">↑</div>
+        <div class="dz-label">Drop file here or click to browse</div>
+        <div class="dz-hint">
+          <strong>.pdf &nbsp;·&nbsp; .docx &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .md</strong><br>
+          Max 5 MB &nbsp;·&nbsp; Text is extracted and shown in the editor before analysis
+        </div>
+      </div>
+
+      <!-- uploading state -->
+      <div class="dz-uploading">
+        <div class="dz-spin"></div>
+        <div class="dz-label">Extracting text…</div>
+        <div class="dz-hint">This takes a second</div>
+      </div>
+
+      <!-- done state -->
+      <div class="dz-done">
+        <div class="dz-file-row">
+          <div class="dz-file-icon">✓</div>
+          <div>
+            <div class="dz-file-name" id="dz-fname">document.pdf</div>
+            <div class="dz-file-meta" id="dz-fmeta">Extracted — text loaded into editor</div>
+          </div>
+          <button class="dz-file-clear" onclick="clearFile(event)">Remove</button>
+        </div>
+      </div>
+
+      <!-- error state -->
+      <div class="dz-error">
+        <div class="dz-err-icon">⚠</div>
+        <div class="dz-err-msg" id="dz-errmsg">Upload failed.</div>
+        <button class="dz-err-retry" onclick="retryUpload(event)">Try again</button>
+      </div>
+    </div>
+
+    <div class="input-foot">
+      <span id="wc">0 words</span>
+      <span>Max ~10,000 words</span>
+    </div>
+
+    <!-- Security badges -->
+    <div class="sec-row">
+      <div class="sec-badge"><span>🔒</span> Files never stored on server</div>
+      <div class="sec-badge"><span>⚡</span> Processed in memory only</div>
+      <div class="sec-badge"><span>✓</span> Type &amp; size validated</div>
+      <div class="sec-badge"><span>○</span> 10 uploads / min rate limit</div>
+    </div>
+
+    <div id="inp-err" class="inline-err"></div>
+    <button id="btn-go" disabled onclick="startGapAnalysis()">Analyse document →</button>
+  </div>
+</div>
+
+<!-- ── STAGE 2: Gap loading ─────────────────────────────────────────────── -->
+<div id="stage-gap-loading" class="stage">
+  <div class="load-box">
+    <div class="spinner"></div>
+    <div class="load-h">Analysing your document</div>
+    <div class="load-s" id="gap-load-s">Checking structural sections…</div>
+  </div>
+</div>
+
+<!-- ── STAGE 3: Gap review ──────────────────────────────────────────────── -->
+<div id="stage-gap-review" class="stage">
+  <div class="gap-inner">
+    <div class="gap-hdr">
+      <div class="tag" id="gap-tag">0 SECTIONS TO REVIEW</div>
+      <h2 class="gap-title">Review missing sections</h2>
+      <p class="gap-sub">
+        Claude identified gaps in your document. Accept or edit each draft, or skip to
+        exclude it. All cards must be decided before the adversarial panel runs.
+      </p>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="gap-prog" style="width:0%"></div></div>
+    <div id="gap-cards"></div>
+    <div class="gap-foot">
+      <span class="gap-foot-ct" id="gap-ct">0 of 0 reviewed</span>
+      <button id="btn-gap-submit" onclick="submitForAnalysis()">Submit for analysis →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STAGE 4: Summary loading ─────────────────────────────────────────── -->
+<div id="stage-sum-loading" class="stage">
+  <div class="load-box">
+    <div class="spinner"></div>
+    <div class="load-h">Preparing your document</div>
+    <div class="load-s">Synthesising original + accepted sections…</div>
+  </div>
+</div>
+
+<!-- ── STAGE 4.5: Synthesised document ──────────────────────────────────── -->
+<div id="stage-synth-doc" class="stage">
+  <div class="sdoc-inner">
+    <div class="sdoc-hdr">
+      <div class="tag">SYNTHESISED DOCUMENT</div>
+      <h2 class="sdoc-title">Your enriched document</h2>
+      <p class="sdoc-sub">
+        Claude merged your original with accepted sections into one coherent brief.
+        AI-suggested additions are highlighted below. Save or copy, then continue.
+      </p>
+    </div>
+    <div class="sdoc-actions">
+      <button class="btn-sdoc btn-sdoc-save"    onclick="saveDoc()">↓ Save as .txt</button>
+      <button class="btn-sdoc btn-sdoc-copy" id="btn-sdoc-copy" onclick="copyDoc()">Copy text</button>
+      <button class="btn-sdoc btn-sdoc-continue" onclick="proceedToAnalysis()">Run adversarial panel →</button>
+    </div>
+    <div class="sdoc-body" id="sdoc-body"></div>
+    <div class="sdoc-additions" id="sdoc-additions"></div>
+    <div class="sdoc-note">The merged synthesis above is passed verbatim to all four adversarial roles.</div>
+  </div>
+</div>
+
+<!-- ── STAGE 5: Analysing ───────────────────────────────────────────────── -->
+<div id="stage-analysing" class="stage">
+  <div class="run-inner">
+    <div class="run-eyebrow">Running adversarial panel</div>
+    <h2 class="run-title">Four analysts attacking your plan</h2>
+    <div class="rchips" id="rchips"></div>
+    <div class="synth-chip" id="synth-chip">
+      <div class="synth-icon">◆</div>
+      <div>
+        <div class="synth-name">Synthesis — Meta-Analyst</div>
+        <div class="synth-st" id="synth-st">Waiting for roles to complete…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STAGE 6: Results ─────────────────────────────────────────────────── -->
+<div id="stage-results" class="stage">
+  <div class="res-hdr">
+    <div>
+      <h2 class="res-title">Analysis complete</h2>
+      <div class="res-meta" id="res-meta">4 roles completed</div>
+    </div>
+    <button class="btn-new" onclick="resetAll()">↺ New analysis</button>
+  </div>
+  <div class="tab-bar" id="tab-bar"></div>
+  <div class="tab-panels" id="tab-panels"></div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────────
+
+let originalDoc   = "";
+let gapList       = [];
+let gapState      = {};
+let roleOutputs   = {};
+let synthOutput   = "";
+let selectedMode  = "startup";
+let enrichedDoc   = "";   // synthesised document — shown before adversarial panel
+
+const MODE_META = {
+  startup:   { hint: "Business plan, pitch deck, fundraising memo",        sections: 16 },
+  decision:  { hint: "Internal proposal, options analysis, recommendation", sections: 11 },
+  technical: { hint: "PRD, architecture proposal, engineering spec",        sections: 12 },
+  strategy:  { hint: "Annual plan, OKR doc, operational strategy",          sections: 12 },
+  readme:    { hint: "GitHub README, open source proposal, developer tool", sections: 11 },
+};
+
+const ROLE_META = [
+  { id:"assumption",      label:"A", name:"Assumption Archaeologist",     color:"#6B9FE4" },
+  { id:"execution",       label:"B", name:"Execution Sceptic",             color:"#E47B6B" },
+  { id:"competitive",     label:"C", name:"Competitive Threat Modeller",   color:"#E4AD6B" },
+  { id:"firstprinciples", label:"D", name:"First Principles Challenger",   color:"#7BE4B8" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stage manager
+// ─────────────────────────────────────────────────────────────────────────────
+
+function showStage(id) {
+  document.querySelectorAll(".stage").forEach(s => s.classList.remove("active"));
+  document.getElementById("stage-" + id).classList.add("active");
+  const showReset = ["gap-review","synth-doc","analysing","results"].includes(id);
+  document.getElementById("btn-reset").style.display = showReset ? "block" : "none";
+  window.scrollTo(0, 0);
+}
+
+function resetAll() {
+  originalDoc = ""; gapList = []; gapState = {};
+  roleOutputs = {}; synthOutput = ""; enrichedDoc = "";
+  document.getElementById("doc-input").value = "";
+  document.getElementById("wc").textContent = "0 words";
+  document.getElementById("wc").className = "";
+  document.getElementById("btn-go").disabled = true;
+  document.getElementById("inp-err").style.display = "none";
+  document.getElementById("gap-cards").innerHTML = "";
+  document.getElementById("gap-prog").style.width = "0%";
+  document.getElementById("gap-ct").textContent = "0 of 0 reviewed";
+  document.getElementById("btn-gap-submit").disabled = false;
+  document.getElementById("sdoc-body").textContent = "";
+  document.getElementById("sdoc-additions").innerHTML = "";
+  setDropZoneState("idle");
+  showStage("landing");
+}
+
+function selectMode(mode) {
+  selectedMode = mode;
+  document.querySelectorAll(".mbtn").forEach(b => {
+    b.classList.toggle("on", b.dataset.mode === mode);
+  });
+  const meta = MODE_META[mode] || MODE_META.startup;
+  document.getElementById("mode-hint").textContent = meta.hint;
+}
+
+
+
+const docEl = document.getElementById("doc-input");
+
+docEl.addEventListener("input", () => {
+  updateWordCount();
+  updateGoButton();
+  document.getElementById("inp-err").style.display = "none";
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stage 1 → 2: Gap analysis
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function startGapAnalysis() {
+  const txt = docEl.value.trim();
+  originalDoc = txt;
+  const meta = MODE_META[selectedMode] || MODE_META.startup;
+  document.getElementById("gap-load-s").textContent =
+    `Checking ${meta.sections} sections for ${meta.hint.split(",")[0].toLowerCase()}…`;
+  showStage("gap-loading");
+  try {
+    const r    = await fetch("/api/gap-analyse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ document: txt, mode: selectedMode }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || "Gap analysis failed.");
+
+    gapList = Array.isArray(data.gaps) ? data.gaps : [];
+    if (gapList.length === 0) {
+      // No gaps — skip review, go straight to analysis
+      await submitForAnalysis();
+    } else {
+      buildGapCards();
+      showStage("gap-review");
+    }
+  } catch (err) {
+    showStage("landing");
+    const e = document.getElementById("inp-err");
+    e.textContent = "Error: " + err.message;
+    e.style.display = "block";
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stage 3: Gap review
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildGapCards() {
+  gapState = {};
+  gapList.forEach((g, i) => {
+    gapState[i] = { status: "pending", text: g.draft || "", section_name: g.section_name, open: false };
+  });
+  document.getElementById("gap-tag").textContent =
+    gapList.length + " SECTION" + (gapList.length !== 1 ? "S" : "") + " TO REVIEW";
+  renderCards();
+}
+
+function renderCards() {
+  const box = document.getElementById("gap-cards");
+  box.innerHTML = "";
+  gapList.forEach((g, i) => {
+    const s   = gapState[i];
+    const cls = "gcard" + (s.status === "accepted" ? " accepted" : s.status === "skipped" ? " skipped" : "");
+    const ico = s.status === "accepted" ? "✓" : s.status === "skipped" ? "—" : String(i + 1);
+
+    let pills = `<span class="pill pill-${g.status || "missing"}">${g.status || "missing"}</span>`;
+    if (s.status === "accepted") pills += `<span class="pill pill-ok">accepted</span>`;
+    if (s.status === "skipped")  pills += `<span class="pill pill-skip">skipped</span>`;
+
+    let acts = "";
+    if (s.status === "pending") {
+      acts = `<button class="btn-ok"     onclick="acceptCard(${i})">Accept draft</button>
+              <button class="btn-skip-c" onclick="skipCard(${i})">Skip</button>`;
+    } else {
+      acts = `<button class="btn-undo-c" onclick="undoCard(${i})">
+        ${s.status === "skipped" ? "Undo skip" : "Undo"}</button>`;
+    }
+
+    const div = document.createElement("div");
+    div.className = cls; div.id = "gc-" + i;
+    div.innerHTML = `
+      <div class="gcard-hdr" onclick="toggleCard(${i})">
+        <div class="gcard-icon">${ico}</div>
+        <div class="gcard-meta">
+          <div class="gcard-name">${esc(g.section_name)}</div>
+          <div class="gcard-why">${esc(g.why_it_matters || "")}</div>
+          <div class="gcard-tags">${pills}</div>
+        </div>
+        <div class="gcard-chev">${s.open ? "▲" : "▼"}</div>
+      </div>
+      <div class="gcard-body ${s.open ? "open" : ""}">
+        <div class="draft-lbl">Claude's proposed draft — edit freely</div>
+        <textarea class="draft-ta" id="ta-${i}" rows="6">${esc(s.text)}</textarea>
+        <div class="card-acts">${acts}</div>
+      </div>`;
+    box.appendChild(div);
+  });
+  updateProgress();
+}
+
+function toggleCard(i) {
+  gapState[i].open = !gapState[i].open;
+  renderCards();
+}
+function acceptCard(i) {
+  const ta = document.getElementById("ta-" + i);
+  if (ta) gapState[i].text = ta.value;
+  gapState[i].status = "accepted";
+  gapState[i].open   = false;
+  renderCards();
+}
+function skipCard(i) {
+  gapState[i].status = "skipped";
+  gapState[i].open   = false;
+  renderCards();
+}
+function undoCard(i) {
+  gapState[i].status = "pending";
+  renderCards();
+}
+function updateProgress() {
+  const total    = gapList.length;
+  const decided  = Object.values(gapState).filter(s => s.status !== "pending").length;
+  const pending  = total - decided;
+  const accepted = Object.values(gapState).filter(s => s.status === "accepted").length;
+  document.getElementById("gap-prog").style.width = total ? Math.round(decided/total*100)+"%" : "0%";
+  document.getElementById("gap-ct").textContent = pending > 0
+    ? `${decided} of ${total} reviewed — ${pending} pending (will be skipped)`
+    : `${accepted} accepted · ${total - accepted} skipped`;
+  document.getElementById("btn-gap-submit").disabled = false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stage 4 → 5 → 6: Submit + SSE
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function submitForAnalysis() {
+  showStage("sum-loading");
+
+  const acceptedSections = Object.values(gapState)
+    .filter(s => s.status === "accepted")
+    .map(s => ({ section_name: s.section_name, content: s.text }));
+
+  // Pre-build the analysing UI so it's ready when the user clicks "Continue"
+  buildRunUI();
+
+  try {
+    const response = await fetch("/api/analyse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ original: originalDoc, acceptedSections, mode: selectedMode }),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || "Analysis request failed (HTTP " + response.status + ").");
+    }
+    // Fire SSE parsing in the background — do NOT await here.
+    // The summary_ready event will show the synth-doc stage.
+    // The user then clicks "Run adversarial panel" to see the analysing stage.
+    // Role events continue streaming while the user reads the synthesised doc.
+    parseSSE(response).catch(err => {
+      alert("Stream error: " + err.message + "\n\nCheck your ANTHROPIC_API_KEY and try again.");
+      resetAll();
+    });
+  } catch (err) {
+    alert("Analysis failed: " + err.message + "\n\nCheck your .env ANTHROPIC_API_KEY and try again.");
+    resetAll();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Analysing UI
+// ─────────────────────────────────────────────────────────────────────────────
+
+function buildRunUI() {
+  const box = document.getElementById("rchips");
+  box.innerHTML = "";
+  ROLE_META.forEach(r => {
+    const el = document.createElement("div");
+    el.className = "rchip";
+    el.id = "rc-" + r.id;
+    el.style.setProperty("--rc", r.color);
+    el.innerHTML = `
+      <div class="rchip-letter">${r.label}</div>
+      <div class="rchip-info">
+        <div class="rchip-name">${r.name}</div>
+        <div class="rchip-st">Queued…</div>
+      </div>
+      <div class="rchip-ind">○</div>`;
+    box.appendChild(el);
+  });
+  document.getElementById("synth-chip").className = "synth-chip";
+  document.getElementById("synth-st").textContent  = "Waiting for roles to complete…";
+}
+
+function setChip(id, state, msg) {
+  const el = document.getElementById("rc-" + id);
+  if (!el) return;
+  el.className = "rchip " + state;
+  el.querySelector(".rchip-st").textContent = msg;
+  const ind = el.querySelector(".rchip-ind");
+  if (state === "running")  ind.textContent = "●";
+  if (state === "complete") ind.textContent = "✓";
+  if (state === "err")      ind.textContent = "✗";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SSE parser
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function parseSSE(response) {
+  const reader  = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const chunks = buf.split("\n\n");
+    buf = chunks.pop();
+    for (const chunk of chunks) {
+      const em = chunk.match(/^event: (.+)$/m);
+      const dm = chunk.match(/^data: (.+)$/ms);
+      if (!em || !dm) continue;
+      try { onEvent(em[1].trim(), JSON.parse(dm[1])); }
+      catch (e) { console.warn("SSE parse:", e); }
+    }
+  }
+}
+
+function onEvent(ev, d) {
+  switch (ev) {
+    case "summary_ready":
+      enrichedDoc = d.text;
+      document.getElementById("sdoc-body").textContent = d.text;
+      renderAdditions(d.acceptedSections ?? []);
+      showStage("synth-doc");
+      break;
+    case "role_start":
+      setChip(d.id, "running", "Analysing…");
+      break;
+    case "role_retry":
+      setChip(d.id, "running", "Primary provider failed — retrying with Claude…");
+      break;
+    case "role_complete":
+      setChip(d.id, "complete", d.fallback ? "Complete (Claude fallback)" : "Complete");
+      roleOutputs[d.id] = d.output;
+      break;
+    case "role_error":
+      setChip(d.id, "err", "Error — " + d.error);
+      break;
+    case "synthesis_start":
+      document.getElementById("synth-chip").className = "synth-chip running";
+      document.getElementById("synth-st").textContent  = "Synthesising all four analyses…";
+      break;
+    case "synthesis_complete":
+      synthOutput = d.output;
+      document.getElementById("synth-st").textContent = "Complete";
+      break;
+    case "synthesis_error":
+      document.getElementById("synth-st").textContent = "Error: " + d.error;
+      break;
+    case "done":
+      document.getElementById("res-meta").textContent =
+        d.rolesCompleted + " of 4 roles completed" +
+        (d.rolesFailed > 0 ? ` · ${d.rolesFailed} failed` : "") +
+        ` · ${(MODE_META[selectedMode]||MODE_META.startup).hint.split(",")[0]}`;
+      buildResults();
+      // If the user is still on the synth-doc page (reading the document while
+      // roles ran in the background), show the analysing stage for a moment so
+      // the completed chips are visible, then auto-advance to results.
+      if (document.getElementById("stage-synth-doc").classList.contains("active")) {
+        showStage("analysing");
+        setTimeout(() => showStage("results"), 1800);
+      } else {
+        showStage("results");
+      }
+      break;
+    case "error":
+      alert("Server error: " + d.message);
+      resetAll();
+      break;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Synthesised document actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderAdditions(sections) {
+  const box = document.getElementById("sdoc-additions");
+  box.innerHTML = "";
+  if (!sections || sections.length === 0) return;
+
+  const label = document.createElement("div");
+  label.className = "sdoc-additions-label";
+  label.textContent = `${sections.length} AI-suggested addition${sections.length !== 1 ? "s" : ""} included`;
+  box.appendChild(label);
+
+  sections.forEach(s => {
+    const card = document.createElement("div");
+    card.className = "sdoc-addition";
+    card.innerHTML = `
+      <div class="sdoc-addition-hdr">
+        <span class="sdoc-ai-pill">AI draft</span>
+        <span class="sdoc-addition-name">${esc(s.section_name)}</span>
+      </div>
+      <div class="sdoc-addition-body">${esc(s.content)}</div>`;
+    box.appendChild(card);
+  });
+}
+
+function saveDoc() {
+  const blob = new Blob([enrichedDoc], { type: "text/plain" });
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = "dissent-synthesised-document.txt";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function copyDoc() {
+  const btn = document.getElementById("btn-sdoc-copy");
+  try {
+    await navigator.clipboard.writeText(enrichedDoc);
+    btn.textContent = "Copied!"; btn.classList.add("done");
+    setTimeout(() => { btn.textContent = "Copy text"; btn.classList.remove("done"); }, 2200);
+  } catch {
+    btn.textContent = "Failed";
+    setTimeout(() => { btn.textContent = "Copy text"; }, 2000);
+  }
+}
+
+function proceedToAnalysis() {
+  // Don't call buildRunUI() here — chips were built in submitForAnalysis()
+  // and may already reflect partial completion. Just navigate to the stage.
+  showStage("analysing");
+}
+
+
+function buildResults() {
+  const tabBar    = document.getElementById("tab-bar");
+  const tabPanels = document.getElementById("tab-panels");
+  tabBar.innerHTML = tabPanels.innerHTML = "";
+
+  const tabs = [
+    ...ROLE_META.map(r => ({
+      id:r.id, label:r.label, name:r.name,
+      color:r.color, content:roleOutputs[r.id]||null, synth:false,
+    })),
+    { id:"synthesis", label:"◆", name:"Synthesis",
+      color:"#B46BE4", content:synthOutput, synth:true },
+  ];
+
+  tabs.forEach(tab => {
+    // Button
+    const btn = document.createElement("button");
+    btn.className = "tbtn" + (tab.synth ? " on" : "");
+    btn.id = "tb-" + tab.id;
+    btn.style.setProperty("--tc", tab.color);
+    btn.onclick = () => switchTab(tab.id);
+    btn.innerHTML = `<span class="tbtn-letter">${tab.label}</span>${tab.name}`;
+    tabBar.appendChild(btn);
+
+    // Panel
+    const panel = document.createElement("div");
+    panel.className = "tpanel" + (tab.synth ? " on synth-panel" : "");
+    panel.id = "tp-" + tab.id;
+    const html = tab.content
+      ? renderMd(tab.content)
+      : `<p style="color:var(--text3)">No output received for this role.</p>`;
+    panel.innerHTML = `
+      <div class="panel-bar">
+        <button class="btn-copy" onclick="copyTab('${tab.id}', this)">Copy</button>
+      </div>
+      <div class="mdc">${html}</div>`;
+    tabPanels.appendChild(panel);
+  });
+}
+
+function switchTab(id) {
+  document.querySelectorAll(".tbtn").forEach(b  => b.classList.remove("on"));
+  document.querySelectorAll(".tpanel").forEach(p => p.classList.remove("on"));
+  document.getElementById("tb-" + id).classList.add("on");
+  document.getElementById("tp-" + id).classList.add("on");
+}
+
+async function copyTab(id, btn) {
+  const txt = id === "synthesis" ? synthOutput : (roleOutputs[id] || "");
+  try {
+    await navigator.clipboard.writeText(txt);
+    btn.textContent = "Copied!"; btn.classList.add("done");
+    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("done"); }, 2200);
+  } catch {
+    btn.textContent = "Failed";
+    setTimeout(() => { btn.textContent = "Copy"; }, 2000);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Markdown renderer
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderMd(src) {
+  if (!src) return "";
+  const lines  = src.split("\n");
+  const out    = [];
+  let inList   = false;
+  let listTag  = "ul";
+
+  const close = () => { if (inList) { out.push(`</${listTag}>`); inList = false; } };
+  const inline = s => s
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/\*\*\*(.+?)\*\*\*/g,"<strong><em>$1</em></strong>")
+    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,"<em>$1</em>")
+    .replace(/`(.+?)`/g,"<code>$1</code>");
+
+  for (const raw of lines) {
+    const l = raw;
+    if      (/^## /.test(l))   { close(); out.push(`<h2>${inline(l.slice(3))}</h2>`); }
+    else if (/^### /.test(l))  { close(); out.push(`<h3>${inline(l.slice(4))}</h3>`); }
+    else if (/^#### /.test(l)) { close(); out.push(`<h4>${inline(l.slice(5))}</h4>`); }
+    else if (/^---+$/.test(l.trim())) { close(); out.push("<hr>"); }
+    else if (/^\d+\. /.test(l)) {
+      if (!inList || listTag !== "ol") { close(); out.push("<ol>"); inList = true; listTag = "ol"; }
+      out.push(`<li>${inline(l.replace(/^\d+\.\s*/,""))}</li>`);
+    }
+    else if (/^[-*•] /.test(l)) {
+      if (!inList || listTag !== "ul") { close(); out.push("<ul>"); inList = true; listTag = "ul"; }
+      out.push(`<li>${inline(l.slice(2))}</li>`);
+    }
+    else if (l.trim() === "") { close(); out.push(""); }
+    else {
+      close();
+      out.push(`<p>${inline(l)}</p>`);
+    }
+  }
+  close();
+  return out.join("\n");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Utility
+// ─────────────────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Input mode (paste / upload)
+// ─────────────────────────────────────────────────────────────────────────────
+
+let currentMode = "paste";
+
+function setMode(mode) {
+  currentMode = mode;
+  const ta = document.getElementById("doc-input");
+  const dz = document.getElementById("drop-zone");
+  document.getElementById("tab-paste").classList.toggle("on",  mode === "paste");
+  document.getElementById("tab-upload").classList.toggle("on", mode === "upload");
+  ta.style.display = mode === "paste"  ? "block" : "none";
+  dz.style.display = mode === "upload" ? "block" : "none";
+  updateGoButton();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Drop zone interactions
+// ─────────────────────────────────────────────────────────────────────────────
+
+function onDropZoneClick(e) {
+  const dz = document.getElementById("drop-zone");
+  // Don't open picker if clicking inside done/error sub-elements
+  if (dz.classList.contains("has-file") || dz.classList.contains("upload-err")) return;
+  if (e.target.classList.contains("dz-err-retry") ||
+      e.target.classList.contains("dz-file-clear")) return;
+  document.getElementById("file-input").click();
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  document.getElementById("drop-zone").classList.add("dragover");
+}
+
+function onDragLeave(e) {
+  document.getElementById("drop-zone").classList.remove("dragover");
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  const dz = document.getElementById("drop-zone");
+  dz.classList.remove("dragover");
+  const file = e.dataTransfer?.files?.[0];
+  if (file) processFile(file);
+}
+
+function onFileChosen(e) {
+  const file = e.target.files?.[0];
+  if (file) processFile(file);
+  // Reset input so the same file can be re-selected after clearing
+  e.target.value = "";
+}
+
+function clearFile(e) {
+  e.stopPropagation();
+  setDropZoneState("idle");
+  document.getElementById("doc-input").value = "";
+  updateWordCount();
+  updateGoButton();
+}
+
+function retryUpload(e) {
+  e.stopPropagation();
+  setDropZoneState("idle");
+  document.getElementById("file-input").click();
+}
+
+function setDropZoneState(state, msg) {
+  const dz = document.getElementById("drop-zone");
+  dz.className = state === "done"      ? "has-file"
+               : state === "error"     ? "upload-err"
+               : state === "uploading" ? "uploading"
+               : "idle";
+  if (msg && state === "error") {
+    document.getElementById("dz-errmsg").textContent = msg;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// File upload and extraction
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Client-side pre-validation (mirrors server rules — server always re-validates)
+const ALLOWED_EXTS = new Set([".txt", ".md", ".pdf", ".docx"]);
+const MAX_BYTES    = 5 * 1024 * 1024;
+
+function clientValidate(file) {
+  const name = file.name || "";
+  const dot  = name.lastIndexOf(".");
+  const ext  = dot >= 0 ? name.slice(dot).toLowerCase() : "";
+  if (!ALLOWED_EXTS.has(ext))
+    return `File type not allowed. Please upload a .pdf, .docx, .txt, or .md file.`;
+  if (file.size > MAX_BYTES)
+    return `File is too large (${(file.size/1024/1024).toFixed(1)} MB). Maximum is 5 MB.`;
+  if (file.size === 0)
+    return `File appears to be empty.`;
+  return null; // valid
+}
+
+async function processFile(file) {
+  // 1. Client-side validation (instant feedback, no round-trip)
+  const clientErr = clientValidate(file);
+  if (clientErr) {
+    setDropZoneState("error", clientErr);
+    updateGoButton();
+    return;
+  }
+
+  setDropZoneState("uploading");
+  updateGoButton();
+
+  // 2. Send to server for extraction
+  const fd = new FormData();
+  fd.append("file", file);
+
+  let data;
+  try {
+    const res = await fetch("/api/extract", { method: "POST", body: fd });
+    data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Server error (${res.status})`);
+  } catch (err) {
+    setDropZoneState("error", err.message);
+    updateGoButton();
+    return;
+  }
+
+  // 3. Populate textarea with extracted text (user can review/edit before submitting)
+  const ta = document.getElementById("doc-input");
+  ta.value = data.text;
+  updateWordCount();
+
+  // 4. Auto-select the most relevant document mode based on file extension
+  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  if (ext === "md") selectMode("readme");
+
+  // 5. Show done state
+  const wc   = ta.value.trim().split(/\s+/).filter(Boolean).length;
+  const kb   = (file.size / 1024).toFixed(0);
+  document.getElementById("dz-fname").textContent =
+    file.name.length > 40 ? file.name.slice(0, 37) + "…" : file.name;
+  document.getElementById("dz-fmeta").textContent =
+    `${wc.toLocaleString()} words extracted · ${kb} KB · text loaded into editor below`;
+  setDropZoneState("done");
+
+  // 6. Switch to paste mode so user can review the extracted text
+  setMode("paste");
+  document.getElementById("tab-upload").classList.add("on"); // keep upload tab highlighted
+  updateGoButton();
+}
+
+// Init — hide drop zone
+setMode("paste");
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared helpers (updateWordCount, updateGoButton)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateWordCount() {
+  const ta = document.getElementById("doc-input");
+  const w  = ta.value.trim().split(/\s+/).filter(Boolean).length;
+  const wc = document.getElementById("wc");
+  wc.textContent = w.toLocaleString() + " words";
+  wc.className   = w > 9000 ? "warn" : "";
+}
+
+function updateGoButton() {
+  const ta  = document.getElementById("doc-input");
+  const w   = ta.value.trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById("btn-go").disabled = w < 50;
+}
+
+// Init — show landing
+showStage("landing");
+</script>
+</body>
+</html>
