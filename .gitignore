@@ -4,6 +4,8 @@ node_modules/
 # Environment — never commit API keys
 .env
 
+/doc
+
 # Detailed setup doc (rename to whatever you prefer)
 SETUP.md
 
