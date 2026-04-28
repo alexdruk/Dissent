@@ -935,19 +935,58 @@
       font-weight: 600; font-size: 15px; color: var(--text);
     }
 
-    /* ── Mode selector ── */
-    .mode-label {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--text3); margin-bottom: 8px;
+    /* ── Mode selector — collapsed by default ── */
+    .mode-bar {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 18px;
     }
+    .mode-detected {
+      display: flex; align-items: center; gap: 8px;
+      flex: 1;
+    }
+    .mode-icon-badge {
+      font-size: 18px; line-height: 1; flex-shrink: 0;
+    }
+    .mode-detected-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 13px;
+      color: var(--text);
+    }
+    .mode-detected-sub {
+      font-size: 11px; color: var(--text3); margin-top: 1px;
+    }
+    .mode-detected-sub.auto { color: var(--accent); }
+    .detect-spin {
+      width: 12px; height: 12px;
+      border: 1.5px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none; flex-shrink: 0;
+    }
+    .detect-spin.active { display: block; }
+    .btn-mode-change {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 11px;
+      letter-spacing: 0.06em;
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text3);
+      padding: 4px 12px; border-radius: 20px;
+      cursor: pointer; transition: color .15s, border-color .15s;
+      flex-shrink: 0;
+    }
+    .btn-mode-change:hover { color: var(--text); border-color: var(--text2); }
+    .btn-mode-change.open  { color: var(--accent); border-color: var(--accent-bdr); }
+
+    /* Override grid — hidden by default */
     .mode-grid {
-      display: grid;
+      display: none;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
+    .mode-grid.open { display: grid; }
     .mbtn {
       display: flex; flex-direction: column;
       align-items: center; gap: 5px;
@@ -960,25 +999,17 @@
       text-align: center;
     }
     .mbtn:hover { border-color: var(--border2); background: var(--surface2); }
-    .mbtn.on {
-      border-color: var(--accent-bdr);
-      background: var(--accent-dim);
-    }
-    .mbtn-icon { font-size: 18px; line-height: 1; }
-    .mbtn-name {
+    .mbtn.on    { border-color: var(--accent-bdr); background: var(--accent-dim); }
+    .mbtn-icon  { font-size: 18px; line-height: 1; }
+    .mbtn-name  {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 600; font-size: 11px;
       color: var(--text2); line-height: 1.25;
     }
     .mbtn.on .mbtn-name { color: var(--accent); }
-    .mode-hint {
-      font-size: 12px; color: var(--text3);
-      margin-top: -14px; margin-bottom: 16px;
-      min-height: 16px; transition: color .15s;
-    }
 
     @media (max-width: 600px) {
-      .mode-grid { grid-template-columns: repeat(3, 1fr); }
+      .mode-grid.open { grid-template-columns: repeat(3, 1fr); }
       .mbtn-name { font-size: 10px; }
       .steps { grid-template-columns: 1fr; }
       .land-title { font-size: 40px; }
@@ -1037,33 +1068,41 @@
       <div class="hist-list" id="hist-list"></div>
     </div>
 
-    <!-- Document type mode selector -->
-    <div class="mode-label">What type of document is this?</div>
-    <div class="mode-grid">
-      <button class="mbtn on" data-mode="startup"   onclick="selectMode('startup')">
+    <!-- Document type mode selector — collapsed by default, expands on "Change" -->
+    <div class="mode-bar">
+      <div class="mode-detected">
+        <span class="mode-icon-badge" id="mode-icon">🚀</span>
+        <div>
+          <div class="mode-detected-label" id="mode-name">Startup / investor plan</div>
+          <div class="mode-detected-sub" id="mode-sub">detecting…</div>
+        </div>
+        <div class="detect-spin" id="detect-spin"></div>
+      </div>
+      <button class="btn-mode-change" id="btn-mode-change" onclick="toggleModeGrid()">Change</button>
+    </div>
+
+    <!-- Override grid — hidden until "Change" is clicked -->
+    <div class="mode-grid" id="mode-grid">
+      <button class="mbtn on" data-mode="startup"   onclick="selectMode('startup',true)">
         <span class="mbtn-icon">🚀</span>
         <span class="mbtn-name">Startup / investor plan</span>
       </button>
-      <button class="mbtn" data-mode="decision"  onclick="selectMode('decision')">
+      <button class="mbtn" data-mode="decision"  onclick="selectMode('decision',true)">
         <span class="mbtn-icon">⚖️</span>
         <span class="mbtn-name">Decision brief</span>
       </button>
-      <button class="mbtn" data-mode="technical" onclick="selectMode('technical')">
+      <button class="mbtn" data-mode="technical" onclick="selectMode('technical',true)">
         <span class="mbtn-icon">⚙️</span>
         <span class="mbtn-name">Technical / product proposal</span>
       </button>
-      <button class="mbtn" data-mode="strategy"  onclick="selectMode('strategy')">
+      <button class="mbtn" data-mode="strategy"  onclick="selectMode('strategy',true)">
         <span class="mbtn-icon">🧭</span>
         <span class="mbtn-name">Strategy / operations doc</span>
       </button>
-      <button class="mbtn" data-mode="readme"    onclick="selectMode('readme')">
+      <button class="mbtn" data-mode="readme"    onclick="selectMode('readme',true)">
         <span class="mbtn-icon">📄</span>
         <span class="mbtn-name">Developer project / README</span>
       </button>
-    </div>
-    <div class="mode-hint detect-hint">
-      <div class="detect-spin" id="detect-spin"></div>
-      <span id="mode-hint">Business plan, pitch deck, fundraising memo</span>
     </div>
 
     <!-- Input mode toggle -->
@@ -1290,13 +1329,44 @@ function resetAll() {
   showStage("landing");
 }
 
-function selectMode(mode) {
+function toggleModeGrid() {
+  const grid = document.getElementById("mode-grid");
+  const btn  = document.getElementById("btn-mode-change");
+  const open = grid.classList.toggle("open");
+  btn.textContent = open ? "Done" : "Change";
+  btn.classList.toggle("open", open);
+}
+
+// userOverride=true means the user clicked a grid button — close grid and lock
+function selectMode(mode, userOverride = false) {
   selectedMode = mode;
-  document.querySelectorAll(".mbtn").forEach(b => {
-    b.classList.toggle("on", b.dataset.mode === mode);
-  });
-  const meta = MODE_META[mode] || MODE_META.startup;
-  document.getElementById("mode-hint").textContent = meta.hint;
+  const meta   = MODE_META[mode] ?? MODE_META.startup;
+  const icons  = { startup:"🚀", decision:"⚖️", technical:"⚙️", strategy:"🧭", readme:"📄" };
+  const names  = {
+    startup:"Startup / investor plan", decision:"Decision brief",
+    technical:"Technical / product proposal", strategy:"Strategy / operations doc",
+    readme:"Developer project / README",
+  };
+
+  document.getElementById("mode-icon").textContent   = icons[mode] ?? "📄";
+  document.getElementById("mode-name").textContent   = names[mode] ?? mode;
+
+  const subEl = document.getElementById("mode-sub");
+  if (userOverride) {
+    subEl.textContent  = meta.hint.split(",")[0];
+    subEl.className    = "mode-detected-sub";
+    // Close the grid after manual selection
+    const grid = document.getElementById("mode-grid");
+    const btn  = document.getElementById("btn-mode-change");
+    grid.classList.remove("open");
+    btn.textContent = "Change";
+    btn.classList.remove("open");
+  }
+
+  // Highlight active button in grid
+  document.querySelectorAll(".mbtn").forEach(b =>
+    b.classList.toggle("on", b.dataset.mode === mode)
+  );
 }
 
 
@@ -2285,8 +2355,11 @@ function scheduleDetect() {
 }
 
 async function detectMode(text) {
-  const spin = document.getElementById("detect-spin");
+  const spin  = document.getElementById("detect-spin");
+  const subEl = document.getElementById("mode-sub");
   spin.classList.add("active");
+  subEl.textContent = "detecting…";
+  subEl.className   = "mode-detected-sub";
   try {
     const r = await fetch("/api/detect-mode", {
       method: "POST",
@@ -2294,13 +2367,17 @@ async function detectMode(text) {
       body: JSON.stringify({ text }),
     });
     const { mode } = await r.json();
-    if (mode && mode !== selectedMode) {
-      selectMode(mode);
-      document.getElementById("mode-hint").textContent =
-        (MODE_META[mode]?.hint ?? "") + " (auto-detected — click to override)";
-    }
-  } catch { /* silent — never block the user */ }
-  finally { spin.classList.remove("active"); }
+    const meta = MODE_META[mode] ?? MODE_META.startup;
+    // Always apply detected mode — user can override via "Change"
+    selectMode(mode, false);
+    subEl.textContent = "Auto-detected · click Change to override";
+    subEl.className   = "mode-detected-sub auto";
+  } catch {
+    subEl.textContent = MODE_META?.[selectedMode]?.hint.split(",")[0] ?? "";
+    subEl.className   = "mode-detected-sub";
+  } finally {
+    spin.classList.remove("active");
+  }
 }
 
 // Wire textarea to word counter + auto-detect (replaces the old addEventListener)
@@ -2313,6 +2390,8 @@ document.getElementById("doc-input").addEventListener("input", () => {
 
 // Init
 renderHistory();
+// Set default mode bar sub-line before any detection runs
+document.getElementById("mode-sub").textContent = "Paste your document to auto-detect";
 showStage("landing");
 </script>
 </body>
