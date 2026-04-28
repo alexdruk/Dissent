@@ -1,14 +1,15 @@
 import "dotenv/config";
 import express from "express";
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
+import { Mistral } from "@mistralai/mistralai";
 import multer from "multer";
 import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
+import PDFDocument from "pdfkit";
 import { join, dirname, extname } from "path";
 import { fileURLToPath } from "url";
-import { GoogleGenAI } from "@google/genai";
-import OpenAI from "openai";
-import { Mistral } from "@mistralai/mistralai";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -172,6 +173,38 @@ async function callClaude(system, user, maxTokens = 1500) {
   return r.content.map(b => (b.type === "text" ? b.text : "")).join("");
 }
 
+// Streaming version — sends role_token SSE events as text arrives.
+// Returns the full accumulated text when the stream ends.
+async function streamRoleClaude(system, user, maxTokens, send, roleId) {
+  const stream = anthropic.messages.stream({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: maxTokens,
+    system,
+    messages: [{ role: "user", content: user }],
+  });
+  let fullText = "";
+  for await (const chunk of stream) {
+    if (chunk.type === "content_block_delta" && chunk.delta?.type === "text_delta") {
+      const token = chunk.delta.text;
+      fullText += token;
+      send("role_token", { id: roleId, token });
+    }
+  }
+  return fullText;
+}
+
+// Parse synthesis — tries JSON first, falls back to prose string.
+function parseSynthesis(raw) {
+  const clean = raw.replace(/```(?:json)?\n?/g, "").replace(/\n?```/g, "").trim();
+  try {
+    const data = JSON.parse(clean);
+    if (!data.verdict || !Array.isArray(data.high_confidence_objections)) throw new Error("bad shape");
+    return { structured: true, data };
+  } catch {
+    return { structured: false, data: raw };
+  }
+}
+
 // ── Structured error logger ───────────────────────────────────────────────────
 // Writes a consistent line to stdout for every server-side failure so the
 // terminal always shows what failed, which endpoint, and the full reason.
@@ -189,88 +222,68 @@ function logError(context, err) {
 }
 
 
-// Each function has the same signature: (system, user, maxTokens) → string.
-// To activate a provider:
-//   1. Run:  npm install <package>   (package names shown below each block)
-//   2. Add the matching key to your .env file (key names shown below)
-//   3. Uncomment the import line at the top of this file
-//   4. Uncomment the client initialisation line in this section
-//   5. Uncomment the function body
-//   6. In buildRoles() below, change the `caller` field for the desired role
+// ── AI provider clients ───────────────────────────────────────────────────────
+// All four providers are active. Each requires an API key in .env.
+// If a key is missing the client will be created but calls will fail —
+// the Claude fallback in the role runner will catch this automatically.
 //
-// Recommended assignment for maximum analytical divergence:
-//   Role A (Assumption Archaeologist)  → callClaude   (default)
-//   Role B (Execution Sceptic)         → callOpenAI   — GPT-4o is sharper on ops critique
+// Keys required in .env:
+//   OPENAI_API_KEY=sk-proj-...
+//   GOOGLE_API_KEY=AIza...
+//   MISTRAL_API_KEY=...
+//
+// Recommended role assignment for maximum analytical divergence:
+//   Role A (Assumption Archaeologist)  → callClaude   — strong structural/logical critique
+//   Role B (Execution Sceptic)         → callOpenAI   — GPT-4o sharper on operational failure
 //   Role C (Competitive Threat)        → callGemini   — strong on market/competitive landscape
 //   Role D (First Principles)          → callMistral  — different training emphasis adds divergence
 
-// ── OpenAI / GPT-4o ───────────────────────────────────────────────────────────
-// npm install openai
-// .env:  OPENAI_API_KEY=sk-...
-//
-// Step 3 — add this import at the top of the file (near the other imports):
-//   import OpenAI from "openai";
-//
-// Step 4 — uncomment the next line:
-	 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-//
+const openai  = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const gemini  = process.env.GOOGLE_API_KEY
+  ? new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY })
+  : null;
+
+const mistral = process.env.MISTRAL_API_KEY
+  ? new Mistral({ apiKey: process.env.MISTRAL_API_KEY })
+  : null;
+
 async function callOpenAI(system, user, maxTokens = 1500) {
-  // Step 5 — uncomment the block below:
-   const r = await openai.chat.completions.create({
-     model: "gpt-4o",
-     max_tokens: maxTokens,
-     messages: [
-       { role: "system", content: system },
-       { role: "user",   content: user   },
-     ],
-   });
-   return r.choices[0].message.content ?? "";
-  throw new Error("OpenAI not configured — see comments in server.js to activate.");
+  if (!openai) throw new Error("OPENAI_API_KEY not set — add it to .env");
+  const r = await openai.chat.completions.create({
+    model: "gpt-4o",
+    max_tokens: maxTokens,
+    messages: [
+      { role: "system", content: system },
+      { role: "user",   content: user   },
+    ],
+  });
+  return r.choices[0].message.content ?? "";
 }
 
-// ── Google Gemini ─────────────────────────────────────────────────────────────
-// npm install @google/genai
-// .env:  GOOGLE_API_KEY=AIza...
-//
-// Step 3 — add this import at the top of the file:
-//   import { GoogleGenAI } from "@google/genai";
-//
-// Step 4 — uncomment the next line:
-	 const gemini = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
-//
 async function callGemini(system, user, maxTokens = 1500) {
-  // Step 5 — uncomment the block below:
-   const r = await gemini.models.generateContent({
-     model: "gemini-2.0-flash",
-     config: { maxOutputTokens: maxTokens, systemInstruction: system },
-     contents: user,
-   });
-   return r.text ?? "";
-  throw new Error("Gemini not configured — see comments in server.js to activate.");
+  if (!gemini) throw new Error("GOOGLE_API_KEY not set — add it to .env");
+  const r = await gemini.models.generateContent({
+    model: "gemini-flash-latest",
+    config: { maxOutputTokens: maxTokens, systemInstruction: system },
+    contents: user,
+  });
+  return r.text ?? "";
 }
 
-// ── Mistral ───────────────────────────────────────────────────────────────────
-// npm install @mistralai/mistralai
-// .env:  MISTRAL_API_KEY=...
-//
-// Step 3 — add this import at the top of the file:
-//   import { Mistral } from "@mistralai/mistralai";
-//
-// Step 4 — uncomment the next line:
-	 const mistral = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
-//
 async function callMistral(system, user, maxTokens = 1500) {
-  // Step 5 — uncomment the block below:
-   const r = await mistral.chat.complete({
-     model: "mistral-large-latest",
-     maxTokens,
-     messages: [
-       { role: "system", content: system },
-       { role: "user",   content: user   },
-     ],
-   });
-   return r.choices?.[0]?.message?.content ?? "";
-  throw new Error("Mistral not configured — see comments in server.js to activate.");
+  if (!mistral) throw new Error("MISTRAL_API_KEY not set — add it to .env");
+  const r = await mistral.chat.complete({
+    model: "mistral-large-latest",
+    maxTokens,
+    messages: [
+      { role: "system", content: system },
+      { role: "user",   content: user   },
+    ],
+  });
+  return r.choices?.[0]?.message?.content ?? "";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -484,8 +497,7 @@ Do not soften. Do not hedge. Argue to win. Then propose alternatives.`,
     },
     {
       id: "execution", label: "B", name: "Execution Sceptic", color: "#E47B6B",
-//      caller: callClaude,   // Recommended: swap to callOpenAI for GPT-4o ops critique
-	  callOpenAI,
+      caller: callOpenAI,   // GPT-4o — sharper on operational failure modes
       system: `${hints.execution}
 
 You are a seasoned operator who has seen many promising strategies fail in execution. Assume the strategy in this document is logically sound — the market opportunity is real, the problem exists, the solution is correct in principle — then argue specifically that this plan will fail in execution.
@@ -504,8 +516,7 @@ Be specific. "Execution is hard" is not acceptable. Name the specific problems t
     },
     {
       id: "competitive", label: "C", name: "Competitive Threat Modeller", color: "#E4AD6B",
-//      caller: callClaude,   // Recommended: swap to callGemini for competitive landscape
-	  caller: callGemini,
+      caller: callGemini,   // Gemini flash — strong on market and competitive landscape
       system: `${hints.competitive}
 
 Write an internal memo to your CEO about the threat this document represents.
@@ -523,8 +534,7 @@ Write as a real strategist protecting your position. Be specific about who you a
     },
     {
       id: "firstprinciples", label: "D", name: "First Principles Challenger", color: "#7BE4B8",
-//      caller: callClaude,   // Recommended: swap to callMistral for different training emphasis
-      caller: callMistral,
+      caller: callMistral,  // Mistral large — different training emphasis adds divergence
       system: `${hints.firstprinciples}
 
 You do not accept premises — you test them. Challenge the fundamental premises of this plan from first principles.
@@ -543,24 +553,59 @@ ALTERNATIVES: Describe the version of this that you would actually back — what
 
 const SYNTHESIS_SYSTEM = `You are a meta-analyst. You have received adversarial analyses from four specialist roles examining the same plan. Each role has also proposed alternatives.
 
-Produce exactly five sections:
+Return ONLY a valid JSON object — no preamble, no explanation, no markdown fences. Start with { and end with }.
 
-## 1. High-confidence objections
-Objections appearing in 2 or more analyses. List each in one sentence with the roles that raised it.
+The JSON must have exactly these six fields:
 
-## 2. Unique objections worth investigating
-Objections raised by only one analyst that are specific and non-generic. Include which role raised it and why it deserves attention.
+{
+  "high_confidence_objections": [
+    {
+      "objection": "One sentence stating the objection concretely",
+      "roles": ["A"],
+      "severity": "critical",
+      "category": "assumption",
+      "recommended_action": "Specific concrete next step"
+    }
+  ],
+  "unique_objections": [
+    {
+      "objection": "One sentence",
+      "role": "B",
+      "why_notable": "Why this deserves attention despite one source"
+    }
+  ],
+  "contradictions": [
+    {
+      "summary": "One sentence describing what the roles disagree about",
+      "role_a": "A",
+      "role_a_claim": "What Role A argues",
+      "role_b": "C",
+      "role_b_claim": "What Role C argues (opposing)"
+    }
+  ],
+  "alternatives": [
+    {
+      "name": "Short name for this alternative",
+      "proposed_by": ["A", "D"],
+      "problem_solved": "What this addresses",
+      "tradeoff": "What is given up",
+      "type": "strategic"
+    }
+  ],
+  "verdict": "3-4 sentences: overall assessment, most important risk, why multi-role found more than single-prompt would",
+  "next_action": "The single most important concrete action this week — specific enough to act on immediately"
+}
 
-## 3. Contradictions between analysts
-Cases where two analysts argue opposing things. Explain what the contradiction reveals about genuine ambiguity in the plan.
-
-## 4. Alternatives comparison
-Collect all concrete alternatives proposed across all four roles. Group similar ones. For each group: name it, which roles proposed it, what problem it solves, trade-offs versus the current approach. Rank by how fundamentally they change the plan (cosmetic → strategic → complete pivot).
-
-## 5. Verdict and recommended next action
-In 3–4 sentences: does multi-role analysis reveal materially different concerns than a single analyst would find? What is the single most important thing to change or validate? What is the concrete next action this week?
+Field rules:
+- severity: "critical" | "significant" | "minor"
+- category: "assumption" | "execution" | "competitive" | "first-principles"
+- type: "cosmetic" | "strategic" | "pivot"
+- high_confidence_objections: only objections raised by 2+ roles
+- unique_objections: only objections raised by exactly 1 role that are specific and non-generic
+- alternatives: all concrete alternatives proposed across all roles, deduplicated and grouped
 
 Be precise. No filler.`;
+
 
 // ── POST /api/gap-analyse ────────────────────────────────────────────────────
 
@@ -646,35 +691,34 @@ app.post("/api/analyse", async (req, res) => {
   await Promise.all(
     ROLES.map(async role => {
       send("role_start", { id: role.id, label: role.label, name: role.name });
+
+      // Use Anthropic streaming when the role uses Claude (tokens flow to client in real-time).
+      // Fall back to standard (non-streaming) call for third-party providers.
+      const isClaudeCaller = !role.caller || role.caller === callClaude;
+
+      const runCall = async (streaming) => {
+        if (streaming) return streamRoleClaude(role.system, enriched, 1500, send, role.id);
+        return (role.caller ?? callClaude)(role.system, enriched, 1500);
+      };
+
       try {
-        const output = await (role.caller ?? callClaude)(role.system, enriched, 1500);
+        const output = await runCall(isClaudeCaller);
         roleOutputs[role.id] = output;
-        send("role_complete", { id: role.id, label: role.label, name: role.name, output });
+        // Always send full output so frontend can do a final markdown render
+        send("role_complete", { id: role.id, label: role.label, name: role.name, output, fallback: false });
       } catch (primaryErr) {
-        // ── Claude fallback ──────────────────────────────────────────────────
-        // If the configured provider fails (e.g. OpenAI/Gemini/Mistral key
-        // missing or rate-limited), automatically retry with Claude so the
-        // session completes rather than losing a role entirely.
         const callerName = role.caller?.name ?? "callClaude";
         logError(`analyse/role-${role.id} [${callerName}]`, primaryErr);
         if (role.caller && role.caller !== callClaude) {
-          send("role_retry", {
-            id: role.id, label: role.label, name: role.name,
-            error: primaryErr.message,
-          });
+          send("role_retry", { id: role.id, label: role.label, name: role.name, error: primaryErr.message });
           try {
-            const output = await callClaude(role.system, enriched, 1500);
+            const output = await runCall(true); // fallback always streams
             roleOutputs[role.id] = output;
-            const ts = new Date().toISOString();
-            console.log(`[${ts}] FALLBACK [analyse/role-${role.id}] ${callerName} failed → retried with callClaude → succeeded`);
-            send("role_complete", {
-              id: role.id, label: role.label, name: role.name,
-              output, fallback: true,
-            });
+            console.log(`[${new Date().toISOString()}] FALLBACK [analyse/role-${role.id}] ${callerName} → callClaude succeeded`);
+            send("role_complete", { id: role.id, label: role.label, name: role.name, output, fallback: true });
             return;
           } catch (fallbackErr) {
             logError(`analyse/role-${role.id} [claude-fallback]`, fallbackErr);
-            // Both providers failed — fall through to role_error below
           }
         }
         roleOutputs[role.id] = null;
@@ -698,8 +742,9 @@ app.post("/api/analyse", async (req, res) => {
     .join("\n\n---\n\n");
 
   try {
-    const synthesis = await callClaude(SYNTHESIS_SYSTEM, synthInput, 2000);
-    send("synthesis_complete", { output: synthesis });
+    const raw      = await callClaude(SYNTHESIS_SYSTEM, synthInput, 2500);
+    const parsed   = parseSynthesis(raw);
+    send("synthesis_complete", parsed); // { structured, data }
   } catch (err) {
     logError("analyse/synthesis", err);
     send("synthesis_error", { error: err.message });
@@ -713,7 +758,142 @@ app.post("/api/analyse", async (req, res) => {
   res.end();
 });
 
-// ── GET /api/health ───────────────────────────────────────────────────────────
+// ── POST /api/detect-mode ─────────────────────────────────────────────────────
+// Takes the first ~200 words of a document, returns the most likely mode key.
+
+const DETECT_SYSTEM = `You are a document classifier. Read the text and classify it as one of these five types:
+- startup   (business plan, pitch deck, investor memo, startup proposal)
+- decision  (decision brief, options analysis, recommendation memo)
+- technical (PRD, architecture doc, engineering spec, technical proposal)
+- strategy  (annual plan, OKR doc, operational strategy, corporate strategy)
+- readme    (GitHub README, open source project, developer tool brief)
+
+Return ONLY the single lowercase word — one of: startup, decision, technical, strategy, readme
+No explanation. No punctuation. Just the word.`;
+
+app.post("/api/detect-mode", async (req, res) => {
+  const { text } = req.body;
+  if (!text || text.trim().length < 30) return res.json({ mode: "startup" });
+  const preview = text.trim().split(/\s+/).slice(0, 200).join(" ");
+  try {
+    const raw  = await callClaude(DETECT_SYSTEM, preview, 10);
+    const mode = raw.trim().toLowerCase().replace(/[^a-z]/g, "");
+    const valid = ["startup","decision","technical","strategy","readme"];
+    res.json({ mode: valid.includes(mode) ? mode : "startup" });
+  } catch (err) {
+    logError("detect-mode", err);
+    res.json({ mode: "startup" }); // fail silently — never block the user
+  }
+});
+
+// ── POST /api/export-pdf ──────────────────────────────────────────────────────
+
+app.post("/api/export-pdf", async (req, res) => {
+  const { mode, modeName, date, roleOutputs: ro, synthesis } = req.body;
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="dissent-analysis-${Date.now()}.pdf"`);
+
+  const doc = new PDFDocument({ margin: 50, size: "A4" });
+  doc.pipe(res);
+
+  const COL    = { purple: "#534AB7", text: "#1A1A1A", mid: "#444", light: "#888", rule: "#E0DFF8" };
+  const W      = doc.page.width - 100; // content width
+
+  const rule   = () => doc.moveTo(50, doc.y).lineTo(50 + W, doc.y).strokeColor(COL.rule).lineWidth(0.5).stroke().moveDown(0.5);
+  const h1     = (t) => { doc.font("Helvetica-Bold").fontSize(18).fillColor(COL.purple).text(t).moveDown(0.3); rule(); };
+  const h2     = (t) => doc.font("Helvetica-Bold").fontSize(12).fillColor(COL.text).text(t).moveDown(0.2);
+  const body   = (t) => doc.font("Helvetica").fontSize(10).fillColor(COL.mid).text(t, { lineGap: 3 }).moveDown(0.4);
+  const label  = (t) => doc.font("Helvetica-Bold").fontSize(9).fillColor(COL.light).text(t.toUpperCase(), { characterSpacing: 0.5 }).moveDown(0.1);
+
+  // ── Cover ──────────────────────────────────────────────────────────────────
+  doc.rect(50, 50, W, 80).fill(COL.purple);
+  doc.font("Helvetica-Bold").fontSize(28).fillColor("white").text("DISSENT", 70, 68);
+  doc.font("Helvetica").fontSize(12).fillColor("#CCCAF4").text("Adversarial Analysis Report", 70, 104);
+  doc.moveDown(4);
+  label("Document type"); body(modeName ?? mode);
+  label("Date"); body(new Date(date ?? Date.now()).toLocaleDateString("en-GB", { day:"numeric", month:"long", year:"numeric" }));
+
+  // ── Role outputs ───────────────────────────────────────────────────────────
+  const ROLE_META_PDF = [
+    { id:"assumption",      label:"A", name:"Assumption Archaeologist" },
+    { id:"execution",       label:"B", name:"Execution Sceptic" },
+    { id:"competitive",     label:"C", name:"Competitive Threat Modeller" },
+    { id:"firstprinciples", label:"D", name:"First Principles Challenger" },
+  ];
+
+  for (const r of ROLE_META_PDF) {
+    const output = ro?.[r.id];
+    if (!output) continue;
+    doc.addPage();
+    h1(`Role ${r.label} — ${r.name}`);
+    // Strip markdown for PDF
+    const plain = output.replace(/^#{1,4} /gm,"").replace(/\*\*(.+?)\*\*/g,"$1").replace(/\*(.+?)\*/g,"$1").replace(/^---$/gm,"");
+    body(plain);
+  }
+
+  // ── Synthesis ──────────────────────────────────────────────────────────────
+  doc.addPage();
+  h1("Synthesis — Meta-Analysis");
+
+  if (synthesis?.structured && synthesis?.data) {
+    const s = synthesis.data;
+
+    const SEV_LABEL = { critical:"● CRITICAL", significant:"◆ SIGNIFICANT", minor:"○ MINOR" };
+
+    if (s.high_confidence_objections?.length) {
+      h2("High-confidence objections");
+      s.high_confidence_objections.forEach(o => {
+        doc.font("Helvetica-Bold").fontSize(9).fillColor(o.severity === "critical" ? "#E05A4A" : o.severity === "significant" ? "#BA7517" : COL.light)
+           .text(SEV_LABEL[o.severity] ?? o.severity.toUpperCase(), { continued: true });
+        doc.font("Helvetica-Bold").fontSize(9).fillColor(COL.light).text(`  ${o.category.toUpperCase()}  ·  Roles: ${o.roles.join(", ")}`);
+        doc.font("Helvetica").fontSize(10).fillColor(COL.text).text(o.objection, { lineGap: 2 });
+        doc.font("Helvetica").fontSize(9).fillColor(COL.mid).text(`→ ${o.recommended_action}`, { lineGap: 2 }).moveDown(0.5);
+      });
+    }
+
+    if (s.unique_objections?.length) {
+      doc.moveDown(0.5); h2("Unique objections");
+      s.unique_objections.forEach(o => {
+        doc.font("Helvetica-Bold").fontSize(9).fillColor(COL.light).text(`Role ${o.role}`);
+        body(`${o.objection}\nWhy notable: ${o.why_notable}`);
+      });
+    }
+
+    if (s.contradictions?.length) {
+      doc.moveDown(0.5); h2("Contradictions");
+      s.contradictions.forEach(c => {
+        doc.font("Helvetica-Bold").fontSize(10).fillColor(COL.text).text(c.summary).moveDown(0.2);
+        body(`Role ${c.role_a}: ${c.role_a_claim}\nRole ${c.role_b}: ${c.role_b_claim}`);
+      });
+    }
+
+    if (s.alternatives?.length) {
+      doc.moveDown(0.5); h2("Alternatives");
+      s.alternatives.forEach(a => {
+        doc.font("Helvetica-Bold").fontSize(10).fillColor(COL.text).text(`${a.name}  `, { continued: true });
+        doc.font("Helvetica").fontSize(9).fillColor(COL.light).text(`[${a.type}]  Proposed by: ${a.proposed_by.join(", ")}`);
+        body(`Solves: ${a.problem_solved}\nTrade-off: ${a.tradeoff}`);
+      });
+    }
+
+    if (s.verdict) {
+      doc.moveDown(0.5); h2("Verdict");
+      body(s.verdict);
+    }
+    if (s.next_action) {
+      h2("Recommended next action");
+      doc.font("Helvetica-Bold").fontSize(11).fillColor(COL.purple).text(s.next_action, { lineGap: 3 });
+    }
+  } else {
+    // prose fallback
+    body(typeof synthesis?.data === "string" ? synthesis.data : "No synthesis available.");
+  }
+
+  doc.end();
+});
+
+
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -727,6 +907,11 @@ app.get("/api/health", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
+  const key  = k => process.env[k] ? "present ✓" : "missing  ✗";
   console.log(`\n  Dissent running at http://localhost:${PORT}`);
-  console.log(`  Anthropic key: ${process.env.ANTHROPIC_API_KEY ? "present ✓" : "MISSING ✗ — add to .env"}\n`);
+  console.log(`  ANTHROPIC_API_KEY  ${key("ANTHROPIC_API_KEY")}  (Role A + summary + synthesis)`);
+  console.log(`  OPENAI_API_KEY     ${key("OPENAI_API_KEY")}  (Role B — Execution Sceptic)`);
+  console.log(`  GOOGLE_API_KEY     ${key("GOOGLE_API_KEY")}  (Role C — Competitive Threat)`);
+  console.log(`  MISTRAL_API_KEY    ${key("MISTRAL_API_KEY")}  (Role D — First Principles)`);
+  console.log(`  Missing keys fall back to Claude automatically.\n`);
 });

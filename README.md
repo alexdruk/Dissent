@@ -19,15 +19,20 @@ Adversarial AI analysis for strategic documents. Paste or upload a business plan
 git clone https://github.com/your-username/dissent.git
 cd dissent
 npm install
-cp .env.example .env          # add your Anthropic key
+cp .env.example .env          # add your API keys (see below)
 npm start                      # → http://localhost:3000
 ```
 
-Requires Node.js 18+ and an [Anthropic API key](https://console.anthropic.com).
+Requires Node.js 18+. API keys needed:
 
-## Adding AI providers
+| Key | Provider | Used for |
+|-----|----------|----------|
+| `ANTHROPIC_API_KEY` | [Anthropic](https://console.anthropic.com) | **Required** — Role A, summary, synthesis |
+| `OPENAI_API_KEY` | [OpenAI](https://platform.openai.com) | Role B (Execution Sceptic) |
+| `GOOGLE_API_KEY` | [Google AI Studio](https://aistudio.google.com) | Role C (Competitive Threat) |
+| `MISTRAL_API_KEY` | [Mistral](https://console.mistral.ai) | Role D (First Principles) |
 
-By default all roles use Claude. To swap a role to GPT-4o, Gemini, or Mistral, follow the step-by-step instructions in SETUP.md.
+Only `ANTHROPIC_API_KEY` is required to run. Missing provider keys fall back to Claude automatically.
 
 ## Stack
 

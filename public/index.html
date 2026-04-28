@@ -731,7 +731,211 @@
     }
     .sec-badge span { font-size: 10px; }
 
-    /* ── Document type mode selector ── */
+    /* ── History panel ── */
+    #history-panel { margin-bottom: 18px; }
+    .hist-hdr {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; padding: 8px 0; user-select: none;
+    }
+    .hist-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text3);
+    }
+    .hist-count {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text3); border-radius: 20px;
+      font-size: 10px; font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; padding: 1px 7px;
+    }
+    .hist-caret { font-size: 9px; color: var(--text3); margin-left: auto; }
+    .hist-list { display: none; flex-direction: column; gap: 5px; padding-bottom: 4px; }
+    .hist-list.open { display: flex; }
+    .hist-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 8px 12px; cursor: pointer;
+      transition: border-color .15s;
+    }
+    .hist-item:hover { border-color: var(--border2); }
+    .hist-item-icon { font-size: 16px; flex-shrink: 0; }
+    .hist-item-meta { flex: 1; min-width: 0; }
+    .hist-item-mode {
+      font-size: 11px; color: var(--accent);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; letter-spacing: 0.05em; margin-bottom: 1px;
+    }
+    .hist-item-preview {
+      font-size: 12px; color: var(--text2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .hist-item-date { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+    .hist-clear {
+      background: none; border: none; color: var(--text3);
+      font-size: 11px; cursor: pointer; padding: 0 2px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; letter-spacing: 0.05em;
+      transition: color .15s;
+    }
+    .hist-clear:hover { color: var(--danger); }
+
+    /* ── Auto-detect spinner on mode hint ── */
+    .detect-hint { display: flex; align-items: center; gap: 6px; }
+    .detect-spin {
+      width: 10px; height: 10px;
+      border: 1.5px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+    .detect-spin.active { display: block; }
+
+    /* ── Streaming — role tab shows raw text during stream, re-renders on complete ── */
+    .mdc.streaming { white-space: pre-wrap; font-size: 14px; line-height: 1.7; color: var(--text2); }
+
+    /* ── Export PDF button in panel bar ── */
+    .btn-export {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 0.05em;
+      padding: 6px 14px; border-radius: var(--r);
+      cursor: pointer; transition: color .15s, border-color .15s;
+    }
+    .btn-export:hover { color: var(--text); border-color: var(--text2); }
+
+    /* ── Structured synthesis dashboard ── */
+    .synth-dash { display: flex; flex-direction: column; gap: 22px; }
+
+    .sdash-section-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 14px;
+      letter-spacing: 0.04em; color: var(--col-s);
+      margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 1px solid rgba(180,107,228,0.2);
+    }
+
+    .sev-cards { display: flex; flex-direction: column; gap: 8px; }
+    .sev-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      overflow: hidden;
+    }
+    .sev-card-hdr {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sev-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .sev-dot.critical    { background: var(--danger); }
+    .sev-dot.significant { background: #E4AD6B; }
+    .sev-dot.minor       { background: var(--text3); }
+    .sev-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 10px; letter-spacing: 0.1em;
+    }
+    .sev-label.critical    { color: var(--danger); }
+    .sev-label.significant { color: #E4AD6B; }
+    .sev-label.minor       { color: var(--text3); }
+    .sev-cat {
+      font-size: 10px; color: var(--text3);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 1px 7px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 600; letter-spacing: 0.04em;
+    }
+    .sev-roles { font-size: 10px; color: var(--text3); margin-left: auto; }
+    .sev-card-body { padding: 10px 14px; }
+    .sev-objection { font-size: 14px; color: var(--text); margin-bottom: 6px; font-weight: 500; }
+    .sev-action {
+      font-size: 12px; color: var(--success);
+      display: flex; align-items: baseline; gap: 5px;
+    }
+    .sev-action::before { content: "→"; }
+
+    .filter-row {
+      display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .filter-btn {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 11px; letter-spacing: 0.05em;
+      padding: 3px 11px; border-radius: 20px;
+      border: 1px solid var(--border2);
+      background: none; color: var(--text2);
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    .filter-btn.on {
+      background: var(--surface2); color: var(--text);
+      border-color: var(--border);
+    }
+    .filter-btn:hover { color: var(--text); }
+
+    .uniq-card, .contra-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 10px 14px; margin-bottom: 7px;
+    }
+    .uniq-role-tag {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 10px; letter-spacing: 0.08em;
+      color: var(--text3); margin-bottom: 4px;
+    }
+    .uniq-text { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+    .uniq-why  { font-size: 12px; color: var(--text2); }
+
+    .contra-summary { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    .contra-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .contra-side {
+      background: var(--surface2); border-radius: var(--r);
+      padding: 8px 10px;
+    }
+    .contra-role { font-size: 10px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 3px; }
+    .contra-claim { font-size: 12px; color: var(--text2); }
+
+    .alt-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 10px 14px; margin-bottom: 7px;
+    }
+    .alt-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .alt-name { font-weight: 500; font-size: 13px; color: var(--text); }
+    .alt-type {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+      padding: 2px 8px; border-radius: 20px; border: 1px solid;
+    }
+    .alt-type.cosmetic  { color: var(--text3); border-color: var(--border2); }
+    .alt-type.strategic { color: #E4AD6B; border-color: rgba(228,173,107,0.3); background: rgba(228,173,107,0.08); }
+    .alt-type.pivot     { color: var(--danger); border-color: rgba(224,90,74,0.3); background: rgba(224,90,74,0.08); }
+    .alt-body { font-size: 12px; color: var(--text2); line-height: 1.55; }
+    .alt-body strong { color: var(--text); font-weight: 500; }
+    .alt-by { font-size: 10px; color: var(--text3); margin-left: auto; flex-shrink: 0; }
+
+    .verdict-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--col-s);
+      border-radius: 0 var(--rl) var(--rl) 0;
+      padding: 14px 16px;
+    }
+    .verdict-text { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 12px; }
+    .next-action-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+      color: var(--col-s); margin-bottom: 5px;
+    }
+    .next-action-text {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 15px; color: var(--text);
+    }
+
+    /* ── Mode selector ── */
     .mode-label {
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 10px; font-weight: 600;
@@ -822,6 +1026,17 @@
       </div>
     </div>
 
+    <!-- History panel (shown only when localStorage has entries) -->
+    <div id="history-panel" style="display:none">
+      <div class="hist-hdr" onclick="toggleHistory()">
+        <span class="hist-label">Recent analyses</span>
+        <span class="hist-count" id="hist-count">0</span>
+        <button class="hist-clear" onclick="clearHistory(event)" title="Clear all">Clear</button>
+        <span class="hist-caret" id="hist-caret">▼</span>
+      </div>
+      <div class="hist-list" id="hist-list"></div>
+    </div>
+
     <!-- Document type mode selector -->
     <div class="mode-label">What type of document is this?</div>
     <div class="mode-grid">
@@ -846,7 +1061,10 @@
         <span class="mbtn-name">Developer project / README</span>
       </button>
     </div>
-    <div class="mode-hint" id="mode-hint">Business plan, pitch deck, fundraising memo</div>
+    <div class="mode-hint detect-hint">
+      <div class="detect-spin" id="detect-spin"></div>
+      <span id="mode-hint">Business plan, pitch deck, fundraising memo</span>
+    </div>
 
     <!-- Input mode toggle -->
     <div class="input-tabs">
@@ -1019,9 +1237,10 @@ let originalDoc   = "";
 let gapList       = [];
 let gapState      = {};
 let roleOutputs   = {};
-let synthOutput   = "";
+let synthOutput   = "";   // string (prose) or structured object
 let selectedMode  = "startup";
-let enrichedDoc   = "";   // synthesised document — shown before adversarial panel
+let enrichedDoc   = "";
+let roleBuffers   = {};   // accumulates streaming tokens per role ID
 
 const MODE_META = {
   startup:   { hint: "Business plan, pitch deck, fundraising memo",        sections: 16 },
@@ -1052,7 +1271,7 @@ function showStage(id) {
 
 function resetAll() {
   originalDoc = ""; gapList = []; gapState = {};
-  roleOutputs = {}; synthOutput = ""; enrichedDoc = "";
+  roleOutputs = {}; synthOutput = ""; enrichedDoc = ""; roleBuffers = {};
   document.getElementById("doc-input").value = "";
   document.getElementById("wc").textContent = "0 words";
   document.getElementById("wc").className = "";
@@ -1064,7 +1283,10 @@ function resetAll() {
   document.getElementById("btn-gap-submit").disabled = false;
   document.getElementById("sdoc-body").textContent = "";
   document.getElementById("sdoc-additions").innerHTML = "";
+  document.getElementById("tab-bar").innerHTML = "";
+  document.getElementById("tab-panels").innerHTML = "";
   setDropZoneState("idle");
+  renderHistory();
   showStage("landing");
 }
 
@@ -1080,12 +1302,6 @@ function selectMode(mode) {
 
 
 const docEl = document.getElementById("doc-input");
-
-docEl.addEventListener("input", () => {
-  updateWordCount();
-  updateGoButton();
-  document.getElementById("inp-err").style.display = "none";
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Stage 1 → 2: Gap analysis
@@ -1251,10 +1467,11 @@ async function submitForAnalysis() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Analysing UI
+// Analysing UI + pre-built result tabs (for streaming)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildRunUI() {
+  // ── Analysing stage chips ──────────────────────────────────────────────────
   const box = document.getElementById("rchips");
   box.innerHTML = "";
   ROLE_META.forEach(r => {
@@ -1273,6 +1490,53 @@ function buildRunUI() {
   });
   document.getElementById("synth-chip").className = "synth-chip";
   document.getElementById("synth-st").textContent  = "Waiting for roles to complete…";
+
+  // ── Pre-build result tab panels so streaming tokens can flow into them ─────
+  roleBuffers = {};
+  const tabBar    = document.getElementById("tab-bar");
+  const tabPanels = document.getElementById("tab-panels");
+  tabBar.innerHTML = tabPanels.innerHTML = "";
+
+  ROLE_META.forEach(r => {
+    roleBuffers[r.id] = "";
+
+    const btn = document.createElement("button");
+    btn.className = "tbtn"; btn.id = "tb-" + r.id;
+    btn.style.setProperty("--tc", r.color);
+    btn.onclick = () => switchTab(r.id);
+    btn.innerHTML = `<span class="tbtn-letter">${r.label}</span>${r.name}`;
+    tabBar.appendChild(btn);
+
+    const panel = document.createElement("div");
+    panel.className = "tpanel"; panel.id = "tp-" + r.id;
+    panel.innerHTML = `
+      <div class="panel-bar">
+        <button class="btn-copy"   onclick="copyTab('${r.id}', this)">Copy</button>
+        <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+      </div>
+      <div class="mdc streaming" id="mdc-${r.id}"></div>`;
+    tabPanels.appendChild(panel);
+  });
+
+  // Synthesis tab
+  const sBtn = document.createElement("button");
+  sBtn.className = "tbtn on"; sBtn.id = "tb-synthesis";
+  sBtn.style.setProperty("--tc", "#B46BE4");
+  sBtn.onclick = () => switchTab("synthesis");
+  sBtn.innerHTML = `<span class="tbtn-letter">◆</span>Synthesis`;
+  tabBar.appendChild(sBtn);
+
+  const sPanel = document.createElement("div");
+  sPanel.className = "tpanel on synth-panel"; sPanel.id = "tp-synthesis";
+  sPanel.innerHTML = `
+    <div class="panel-bar">
+      <button class="btn-copy"   onclick="copyTab('synthesis', this)">Copy</button>
+      <button class="btn-export" onclick="exportPDF()">Export PDF</button>
+    </div>
+    <div class="mdc" id="mdc-synthesis">
+      <p style="color:var(--text3)">Waiting for adversarial roles to complete…</p>
+    </div>`;
+  tabPanels.appendChild(sPanel);
 }
 
 function setChip(id, state, msg) {
@@ -1319,39 +1583,78 @@ function onEvent(ev, d) {
       renderAdditions(d.acceptedSections ?? []);
       showStage("synth-doc");
       break;
+
     case "role_start":
       setChip(d.id, "running", "Analysing…");
       break;
+
+    case "role_token": {
+      // Append streaming token to the pre-built tab panel
+      roleBuffers[d.id] = (roleBuffers[d.id] ?? "") + d.token;
+      const mdcEl = document.getElementById("mdc-" + d.id);
+      if (mdcEl) mdcEl.textContent = roleBuffers[d.id];
+      break;
+    }
+
     case "role_retry":
       setChip(d.id, "running", "Primary provider failed — retrying with Claude…");
       break;
+
     case "role_complete":
-      setChip(d.id, "complete", d.fallback ? "Complete (Claude fallback)" : "Complete");
       roleOutputs[d.id] = d.output;
+      // Final markdown render — replaces the raw streamed text
+      const mdcFinal = document.getElementById("mdc-" + d.id);
+      if (mdcFinal && d.output) {
+        mdcFinal.className = "mdc";
+        mdcFinal.innerHTML = renderMd(d.output);
+      }
+      setChip(d.id, "complete", d.fallback ? "Complete (Claude fallback)" : "Complete");
       break;
+
     case "role_error":
       setChip(d.id, "err", "Error — " + d.error);
       break;
+
     case "synthesis_start":
       document.getElementById("synth-chip").className = "synth-chip running";
       document.getElementById("synth-st").textContent  = "Synthesising all four analyses…";
       break;
+
     case "synthesis_complete":
-      synthOutput = d.output;
+      synthOutput = d; // { structured, data }
+      const mdcSynth = document.getElementById("mdc-synthesis");
+      if (mdcSynth) {
+        if (d.structured) {
+          mdcSynth.innerHTML = "";
+          mdcSynth.appendChild(renderStructuredSynthesis(d.data));
+        } else {
+          mdcSynth.className = "mdc";
+          mdcSynth.innerHTML = renderMd(typeof d.data === "string" ? d.data : "");
+        }
+      }
       document.getElementById("synth-st").textContent = "Complete";
       break;
+
     case "synthesis_error":
       document.getElementById("synth-st").textContent = "Error: " + d.error;
       break;
+
     case "done":
       document.getElementById("res-meta").textContent =
         d.rolesCompleted + " of 4 roles completed" +
         (d.rolesFailed > 0 ? ` · ${d.rolesFailed} failed` : "") +
         ` · ${(MODE_META[selectedMode]||MODE_META.startup).hint.split(",")[0]}`;
-      buildResults();
-      // If the user is still on the synth-doc page (reading the document while
-      // roles ran in the background), show the analysing stage for a moment so
-      // the completed chips are visible, then auto-advance to results.
+      // Save to localStorage history
+      saveToHistory({
+        id: Date.now(),
+        date: new Date().toISOString(),
+        mode: selectedMode,
+        modeName: (MODE_META[selectedMode]||MODE_META.startup).hint.split(",")[0],
+        docPreview: originalDoc.trim().slice(0, 120),
+        roleOutputs: { ...roleOutputs },
+        synthOutput: synthOutput,
+        enrichedDoc: enrichedDoc,
+      });
       if (document.getElementById("stage-synth-doc").classList.contains("active")) {
         showStage("analysing");
         setTimeout(() => showStage("results"), 1800);
@@ -1359,6 +1662,7 @@ function onEvent(ev, d) {
         showStage("results");
       }
       break;
+
     case "error":
       alert("Server error: " + d.message);
       resetAll();
@@ -1421,45 +1725,7 @@ function proceedToAnalysis() {
 }
 
 
-function buildResults() {
-  const tabBar    = document.getElementById("tab-bar");
-  const tabPanels = document.getElementById("tab-panels");
-  tabBar.innerHTML = tabPanels.innerHTML = "";
-
-  const tabs = [
-    ...ROLE_META.map(r => ({
-      id:r.id, label:r.label, name:r.name,
-      color:r.color, content:roleOutputs[r.id]||null, synth:false,
-    })),
-    { id:"synthesis", label:"◆", name:"Synthesis",
-      color:"#B46BE4", content:synthOutput, synth:true },
-  ];
-
-  tabs.forEach(tab => {
-    // Button
-    const btn = document.createElement("button");
-    btn.className = "tbtn" + (tab.synth ? " on" : "");
-    btn.id = "tb-" + tab.id;
-    btn.style.setProperty("--tc", tab.color);
-    btn.onclick = () => switchTab(tab.id);
-    btn.innerHTML = `<span class="tbtn-letter">${tab.label}</span>${tab.name}`;
-    tabBar.appendChild(btn);
-
-    // Panel
-    const panel = document.createElement("div");
-    panel.className = "tpanel" + (tab.synth ? " on synth-panel" : "");
-    panel.id = "tp-" + tab.id;
-    const html = tab.content
-      ? renderMd(tab.content)
-      : `<p style="color:var(--text3)">No output received for this role.</p>`;
-    panel.innerHTML = `
-      <div class="panel-bar">
-        <button class="btn-copy" onclick="copyTab('${tab.id}', this)">Copy</button>
-      </div>
-      <div class="mdc">${html}</div>`;
-    tabPanels.appendChild(panel);
-  });
-}
+function buildResults() {} // no-op — tabs pre-built in buildRunUI()
 
 function switchTab(id) {
   document.querySelectorAll(".tbtn").forEach(b  => b.classList.remove("on"));
@@ -1469,7 +1735,16 @@ function switchTab(id) {
 }
 
 async function copyTab(id, btn) {
-  const txt = id === "synthesis" ? synthOutput : (roleOutputs[id] || "");
+  let txt = "";
+  if (id === "synthesis") {
+    if (synthOutput?.structured) {
+      txt = synthesisToText(synthOutput.data);
+    } else {
+      txt = typeof synthOutput?.data === "string" ? synthOutput.data : "";
+    }
+  } else {
+    txt = roleOutputs[id] || "";
+  }
   try {
     await navigator.clipboard.writeText(txt);
     btn.textContent = "Copied!"; btn.classList.add("done");
@@ -1479,6 +1754,203 @@ async function copyTab(id, btn) {
     setTimeout(() => { btn.textContent = "Copy"; }, 2000);
   }
 }
+
+function synthesisToText(s) {
+  if (!s) return "";
+  let t = "";
+  if (s.high_confidence_objections?.length) {
+    t += "HIGH-CONFIDENCE OBJECTIONS\n";
+    s.high_confidence_objections.forEach(o => {
+      t += `[${o.severity?.toUpperCase()}] ${o.objection}\n  Category: ${o.category}  Roles: ${o.roles?.join(", ")}\n  → ${o.recommended_action}\n\n`;
+    });
+  }
+  if (s.unique_objections?.length) {
+    t += "UNIQUE OBJECTIONS\n";
+    s.unique_objections.forEach(o => t += `[Role ${o.role}] ${o.objection}\n  ${o.why_notable}\n\n`);
+  }
+  if (s.contradictions?.length) {
+    t += "CONTRADICTIONS\n";
+    s.contradictions.forEach(c => t += `${c.summary}\n  Role ${c.role_a}: ${c.role_a_claim}\n  Role ${c.role_b}: ${c.role_b_claim}\n\n`);
+  }
+  if (s.alternatives?.length) {
+    t += "ALTERNATIVES\n";
+    s.alternatives.forEach(a => t += `${a.name} [${a.type}] — Proposed by: ${a.proposed_by?.join(", ")}\n  Solves: ${a.problem_solved}\n  Trade-off: ${a.tradeoff}\n\n`);
+  }
+  if (s.verdict)      t += `VERDICT\n${s.verdict}\n\n`;
+  if (s.next_action)  t += `NEXT ACTION\n${s.next_action}\n`;
+  return t;
+}
+
+// ── Structured synthesis dashboard renderer ───────────────────────────────────
+function renderStructuredSynthesis(s) {
+  const wrap = document.createElement("div");
+  wrap.className = "synth-dash";
+
+  // ── Filter state ──────────────────────────────────────────────────────────
+  let activeFilter = "all";
+  const cats = ["all","assumption","execution","competitive","first-principles"];
+
+  const objSection = document.createElement("div");
+
+  const filterRow = document.createElement("div");
+  filterRow.className = "filter-row";
+  cats.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "filter-btn" + (c === "all" ? " on" : "");
+    b.textContent = c === "all" ? "All" : c.charAt(0).toUpperCase() + c.slice(1);
+    b.onclick = () => {
+      activeFilter = c;
+      filterRow.querySelectorAll(".filter-btn").forEach(fb => fb.classList.remove("on"));
+      b.classList.add("on");
+      renderObjCards();
+    };
+    filterRow.appendChild(b);
+  });
+
+  const cardsDiv = document.createElement("div");
+  cardsDiv.className = "sev-cards";
+
+  function renderObjCards() {
+    cardsDiv.innerHTML = "";
+    const items = (s.high_confidence_objections ?? []).filter(
+      o => activeFilter === "all" || o.category === activeFilter
+    );
+    if (!items.length) {
+      cardsDiv.innerHTML = `<p style="color:var(--text3);font-size:13px">No objections in this category.</p>`;
+      return;
+    }
+    items.forEach(o => {
+      const card = document.createElement("div");
+      card.className = "sev-card";
+      card.innerHTML = `
+        <div class="sev-card-hdr">
+          <div class="sev-dot ${esc(o.severity)}"></div>
+          <span class="sev-label ${esc(o.severity)}">${esc((o.severity||"").toUpperCase())}</span>
+          <span class="sev-cat">${esc(o.category||"")}</span>
+          <span class="sev-roles">Roles ${esc((o.roles||[]).join(", "))}</span>
+        </div>
+        <div class="sev-card-body">
+          <div class="sev-objection">${esc(o.objection||"")}</div>
+          <div class="sev-action">${esc(o.recommended_action||"")}</div>
+        </div>`;
+      cardsDiv.appendChild(card);
+    });
+  }
+
+  const objTitle = document.createElement("div");
+  objTitle.className = "sdash-section-title";
+  objTitle.textContent = `High-confidence objections (${(s.high_confidence_objections||[]).length})`;
+  objSection.appendChild(objTitle);
+  objSection.appendChild(filterRow);
+  objSection.appendChild(cardsDiv);
+  renderObjCards();
+  wrap.appendChild(objSection);
+
+  // ── Unique objections ─────────────────────────────────────────────────────
+  if (s.unique_objections?.length) {
+    const sec = document.createElement("div");
+    sec.innerHTML = `<div class="sdash-section-title">Unique objections (${s.unique_objections.length})</div>`;
+    s.unique_objections.forEach(o => {
+      const card = document.createElement("div");
+      card.className = "uniq-card";
+      card.innerHTML = `
+        <div class="uniq-role-tag">Role ${esc(o.role||"")}</div>
+        <div class="uniq-text">${esc(o.objection||"")}</div>
+        <div class="uniq-why">${esc(o.why_notable||"")}</div>`;
+      sec.appendChild(card);
+    });
+    wrap.appendChild(sec);
+  }
+
+  // ── Contradictions ────────────────────────────────────────────────────────
+  if (s.contradictions?.length) {
+    const sec = document.createElement("div");
+    sec.innerHTML = `<div class="sdash-section-title">Contradictions (${s.contradictions.length})</div>`;
+    s.contradictions.forEach(c => {
+      const card = document.createElement("div");
+      card.className = "contra-card";
+      card.innerHTML = `
+        <div class="contra-summary">${esc(c.summary||"")}</div>
+        <div class="contra-pair">
+          <div class="contra-side">
+            <div class="contra-role">Role ${esc(c.role_a||"")}</div>
+            <div class="contra-claim">${esc(c.role_a_claim||"")}</div>
+          </div>
+          <div class="contra-side">
+            <div class="contra-role">Role ${esc(c.role_b||"")}</div>
+            <div class="contra-claim">${esc(c.role_b_claim||"")}</div>
+          </div>
+        </div>`;
+      sec.appendChild(card);
+    });
+    wrap.appendChild(sec);
+  }
+
+  // ── Alternatives ──────────────────────────────────────────────────────────
+  if (s.alternatives?.length) {
+    const sec = document.createElement("div");
+    sec.innerHTML = `<div class="sdash-section-title">Alternatives (${s.alternatives.length})</div>`;
+    s.alternatives.forEach(a => {
+      const card = document.createElement("div");
+      card.className = "alt-card";
+      card.innerHTML = `
+        <div class="alt-hdr">
+          <span class="alt-name">${esc(a.name||"")}</span>
+          <span class="alt-type ${esc(a.type||"cosmetic")}">${esc(a.type||"")}</span>
+          <span class="alt-by">Roles ${esc((a.proposed_by||[]).join(", "))}</span>
+        </div>
+        <div class="alt-body">
+          <strong>Solves:</strong> ${esc(a.problem_solved||"")}  ·  <strong>Trade-off:</strong> ${esc(a.tradeoff||"")}
+        </div>`;
+      sec.appendChild(card);
+    });
+    wrap.appendChild(sec);
+  }
+
+  // ── Verdict + next action ─────────────────────────────────────────────────
+  if (s.verdict || s.next_action) {
+    const sec = document.createElement("div");
+    sec.innerHTML = `<div class="sdash-section-title">Verdict</div>`;
+    const box = document.createElement("div");
+    box.className = "verdict-box";
+    if (s.verdict)     box.innerHTML += `<div class="verdict-text">${esc(s.verdict)}</div>`;
+    if (s.next_action) box.innerHTML += `<div class="next-action-label">RECOMMENDED NEXT ACTION</div><div class="next-action-text">${esc(s.next_action)}</div>`;
+    sec.appendChild(box);
+    wrap.appendChild(sec);
+  }
+
+  return wrap;
+}
+
+// ── PDF export ────────────────────────────────────────────────────────────────
+async function exportPDF() {
+  try {
+    const payload = {
+      mode:        selectedMode,
+      modeName:    (MODE_META[selectedMode]||MODE_META.startup).hint.split(",")[0],
+      date:        new Date().toISOString(),
+      roleOutputs: roleOutputs,
+      synthesis:   synthOutput,
+    };
+    const res  = await fetch("/api/export-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) { alert("PDF export failed."); return; }
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `dissent-${selectedMode}-${Date.now()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert("PDF export error: " + e.message);
+  }
+}
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Markdown renderer
@@ -1703,8 +2175,146 @@ function updateGoButton() {
   document.getElementById("btn-go").disabled = w < 50;
 }
 
-// Init — show landing
+// ─────────────────────────────────────────────────────────────────────────────
+// localStorage history
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HIST_KEY  = "dissent_history";
+const HIST_MAX  = 10;
+const MODE_ICONS = { startup:"🚀", decision:"⚖️", technical:"⚙️", strategy:"🧭", readme:"📄" };
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HIST_KEY) ?? "[]"); }
+  catch { return []; }
+}
+
+function saveToHistory(session) {
+  try {
+    const hist = getHistory();
+    hist.unshift(session);
+    localStorage.setItem(HIST_KEY, JSON.stringify(hist.slice(0, HIST_MAX)));
+    renderHistory();
+  } catch { /* quota exceeded — silently skip */ }
+}
+
+function clearHistory(e) {
+  e?.stopPropagation();
+  localStorage.removeItem(HIST_KEY);
+  renderHistory();
+}
+
+function toggleHistory() {
+  const list  = document.getElementById("hist-list");
+  const caret = document.getElementById("hist-caret");
+  list.classList.toggle("open");
+  caret.textContent = list.classList.contains("open") ? "▲" : "▼";
+}
+
+function renderHistory() {
+  const hist    = getHistory();
+  const panel   = document.getElementById("history-panel");
+  const listEl  = document.getElementById("hist-list");
+  const countEl = document.getElementById("hist-count");
+  if (!hist.length) { panel.style.display = "none"; return; }
+  panel.style.display = "block";
+  countEl.textContent = hist.length;
+  listEl.innerHTML = "";
+  hist.forEach((s, i) => {
+    const item = document.createElement("div");
+    item.className = "hist-item";
+    const d    = new Date(s.date);
+    const when = isNaN(d) ? "" : d.toLocaleDateString("en-GB", { day:"numeric", month:"short" });
+    item.innerHTML = `
+      <span class="hist-item-icon">${MODE_ICONS[s.mode] ?? "📄"}</span>
+      <div class="hist-item-meta">
+        <div class="hist-item-mode">${esc(s.modeName ?? s.mode)}</div>
+        <div class="hist-item-preview">${esc(s.docPreview ?? "")}</div>
+      </div>
+      <span class="hist-item-date">${when}</span>`;
+    item.onclick = () => restoreSession(i);
+    listEl.appendChild(item);
+  });
+}
+
+function restoreSession(index) {
+  const hist = getHistory();
+  const s    = hist[index];
+  if (!s) return;
+  originalDoc  = s.enrichedDoc ?? "";
+  roleOutputs  = s.roleOutputs ?? {};
+  synthOutput  = s.synthOutput ?? "";
+  selectedMode = s.mode ?? "startup";
+  enrichedDoc  = s.enrichedDoc ?? "";
+  roleBuffers  = {};
+  selectMode(selectedMode);
+  buildRunUI();
+  ROLE_META.forEach(r => {
+    const output = roleOutputs[r.id];
+    if (!output) return;
+    setChip(r.id, "complete", "Restored");
+    const mdc = document.getElementById("mdc-" + r.id);
+    if (mdc) { mdc.className = "mdc"; mdc.innerHTML = renderMd(output); }
+  });
+  const mdcS = document.getElementById("mdc-synthesis");
+  if (mdcS) {
+    if (synthOutput?.structured) {
+      mdcS.innerHTML = "";
+      mdcS.appendChild(renderStructuredSynthesis(synthOutput.data));
+    } else {
+      mdcS.className = "mdc";
+      mdcS.innerHTML = renderMd(typeof synthOutput?.data === "string" ? synthOutput.data : "");
+    }
+  }
+  document.getElementById("res-meta").textContent =
+    `Restored · ${esc(s.modeName ?? s.mode)} · ${new Date(s.date).toLocaleDateString("en-GB")}`;
+  showStage("results");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auto document type detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _detectTimer = null;
+
+function scheduleDetect() {
+  clearTimeout(_detectTimer);
+  const txt   = document.getElementById("doc-input").value.trim();
+  const words = txt.split(/\s+/).filter(Boolean).length;
+  if (words < 50) return;
+  _detectTimer = setTimeout(() => detectMode(txt), 1200);
+}
+
+async function detectMode(text) {
+  const spin = document.getElementById("detect-spin");
+  spin.classList.add("active");
+  try {
+    const r = await fetch("/api/detect-mode", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    const { mode } = await r.json();
+    if (mode && mode !== selectedMode) {
+      selectMode(mode);
+      document.getElementById("mode-hint").textContent =
+        (MODE_META[mode]?.hint ?? "") + " (auto-detected — click to override)";
+    }
+  } catch { /* silent — never block the user */ }
+  finally { spin.classList.remove("active"); }
+}
+
+// Wire textarea to word counter + auto-detect (replaces the old addEventListener)
+document.getElementById("doc-input").addEventListener("input", () => {
+  updateWordCount();
+  updateGoButton();
+  document.getElementById("inp-err").style.display = "none";
+  scheduleDetect();
+});
+
+// Init
+renderHistory();
 showStage("landing");
 </script>
 </body>
 </html>
+
