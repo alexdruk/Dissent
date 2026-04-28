@@ -38,6 +38,10 @@ Only `ANTHROPIC_API_KEY` is required to run. Missing provider keys fall back to 
 
 Node.js · Express · Anthropic Claude · Server-Sent Events · single-file HTML frontend · no framework · no build step
 
+## Status
+
+V.1 implemented
+
 ## License
 
 MIT
