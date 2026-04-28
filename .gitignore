@@ -6,6 +6,7 @@ node_modules/
 
 # Detailed setup doc (rename to whatever you prefer)
 SETUP.md
+dissent-proposal.md
 
 # macOS
 .DS_Store
