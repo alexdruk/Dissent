@@ -305,13 +305,14 @@ const DOC_MODES = {
       execution:       "This is a startup or investor plan. Focus on the path to first paying customers, burn rate realism, and whether the team has done this before.",
       competitive:     "This is a startup or investor plan. You are a senior strategist at the most threatening incumbent or well-funded competitor. Be specific about which company you represent.",
       firstprinciples: "This is a startup or investor plan. Challenge whether this is a vitamin or a painkiller, whether the market is as large as claimed, and whether the team can actually execute.",
+      evidence:        "This is a startup or investor plan. Focus on whether the problem is evidenced by observable public behaviour — complaints, workarounds, job postings, search demand — or merely asserted. Founders systematically overstate problem severity based on conversations with sympathetic peers.",
     },
     sections: [
       { name: "Executive summary",              guidance: "A tight decision-oriented overview: what is being built, for whom, why now, and what is being asked — often written last but read first." },
       { name: "Problem statement",              guidance: "Clearly defined with evidence of real pain — not a generic observation but a specific description of who suffers, how often, and how acutely." },
+      { name: "Target customer",                guidance: "Specific persona with pain level and willingness to pay — 'SMBs' is not a customer; a named archetype with a job title and a specific workflow problem is." },
       { name: "Solution / product description", guidance: "How the product actually works, not just what problem it solves — the mechanism, the workflow, the key differentiating feature." },
       { name: "Key assumptions",                guidance: "The critical beliefs the plan depends on, stated explicitly: market size, conversion rates, pricing tolerance, competitive response, hiring timeline." },
-      { name: "Target customer",                guidance: "Specific persona with pain level and willingness to pay — 'SMBs' is not a customer; a named archetype with a job title and a specific workflow problem is." },
       { name: "Market sizing",                  guidance: "TAM/SAM/SOM with methodology — bottom-up preferred; top-down accepted only with a credible source and a realistic penetration argument." },
       { name: "Competitor analysis",            guidance: "Named competitors with URLs, feature comparison, and a clear positioning argument for why this product wins on a specific dimension." },
       { name: "Go-to-market strategy",          guidance: "Specific channels, tactics, and a 90-day timeline to first 10 paying customers — not 'content marketing and SEO' but named communities, outreach templates, and a sequenced plan." },
@@ -320,8 +321,8 @@ const DOC_MODES = {
       { name: "Sensitivity analysis",           guidance: "What happens if 2–3 key assumptions fail simultaneously — the downside case with specific numbers, not qualitative hedging." },
       { name: "Funding requirements & use of funds", guidance: "How much capital is needed, over what period, allocated to which specific categories — hiring, infrastructure, marketing, runway." },
       { name: "Team and execution plan",        guidance: "Who is building this and why they are credible for this specific problem — relevant prior experience, not just titles." },
-      { name: "Risk assessment",                guidance: "Specific risks with named mitigations: technical, market, competitive, operational, financial — not generic categories but named failure modes." },
       { name: "Traction / proof points",        guidance: "Early users, pilots, letters of intent, revenue, or waitlist — any evidence that demand exists beyond the founder's conviction." },
+      { name: "Risk assessment",                guidance: "Specific risks with named mitigations: technical, market, competitive, operational, financial — not generic categories but named failure modes." },
       { name: "Success metrics",                guidance: "KPIs and milestones with specific numbers and dates — not 'grow revenue' but '100 paying customers by Month 6 at $49/month average.'" },
     ],
   },
@@ -334,9 +335,11 @@ const DOC_MODES = {
       execution:       "This is an internal decision brief. Focus on implementation risk, organisational change management, and whether the team executing this decision has the authority and capability to do so.",
       competitive:     "This is an internal decision brief. Consider external competitive dynamics that the decision creates or ignores — what does a competitor do if this decision is made?",
       firstprinciples: "This is an internal decision brief. Challenge whether this is the right decision to be making at all, whether the options considered are complete, and whether the criteria are measuring what actually matters.",
+      evidence:        "This is an internal decision brief. Focus on whether the stated problem or opportunity is backed by observable data — usage metrics, revenue figures, documented complaints, measurable trends — or whether it rests on anecdote, assumption, or internal consensus that has never been stress-tested against external reality.",
     },
     sections: [
       { name: "Problem / opportunity statement",  guidance: "What specific situation requires a decision — with evidence of urgency and the cost of not deciding." },
+      { name: "Decision timeline / urgency",       guidance: "Why this decision needs to be made now — the cost of delay and the window that closes if action is deferred." },
       { name: "Decision context and constraints",  guidance: "What is in scope vs out of scope; what constraints (budget, time, regulatory) bound the options." },
       { name: "Key assumptions",                   guidance: "Critical beliefs underpinning the recommendation — if any of these are wrong, the decision changes." },
       { name: "Options considered",                guidance: "At least three options including a 'do nothing' baseline — each described fairly, not set up as strawmen." },
@@ -345,7 +348,6 @@ const DOC_MODES = {
       { name: "Trade-offs",                        guidance: "What is explicitly being given up by choosing this option over the alternatives." },
       { name: "Implementation plan",               guidance: "Concrete steps, owners, and a timeline — what happens in the first 30 days if this decision is approved." },
       { name: "Risk assessment",                   guidance: "Specific risks of the recommended option with mitigations — not generic concerns but named failure modes." },
-      { name: "Decision timeline / urgency",       guidance: "Why this decision needs to be made now — the cost of delay and the window that closes if action is deferred." },
       { name: "Success metrics",                   guidance: "How will we know if this decision was correct — measurable outcomes with a review date." },
     ],
   },
@@ -358,15 +360,16 @@ const DOC_MODES = {
       execution:       "This is a technical or product proposal. Focus on build complexity, dependency risk, testing burden, and whether the engineering timeline accounts for the real cost of production-grade code versus a prototype.",
       competitive:     "This is a technical or product proposal. Consider whether existing libraries, open-source projects, or established vendors solve this problem already — and what the build-vs-buy argument misses.",
       firstprinciples: "This is a technical or product proposal. Challenge whether the technical approach is the right solution or whether a simpler architecture would achieve the same outcome with less risk.",
+      evidence:        "This is a technical or product proposal. Focus on whether the user problem is evidenced by observable behaviour — GitHub issues, Stack Overflow question volume, developer forum complaints, npm download trends for workaround libraries — or merely assumed. Technical proposals frequently mistake 'this is annoying' for 'people will pay to fix this.'",
     },
     sections: [
       { name: "Problem and use case",           guidance: "The specific user problem being solved, with a concrete usage scenario — not a technical description of what is being built." },
-      { name: "Solution overview",              guidance: "How the product works at the user-facing level, distinct from the technical implementation." },
-      { name: "Architecture / technical approach", guidance: "Systems, stack, integrations, and key design decisions — with explicit rationale for choices made." },
-      { name: "Key assumptions",                guidance: "Technical beliefs the design depends on: latency requirements, data volumes, API reliability, browser/device constraints." },
       { name: "Target user",                    guidance: "Who specifically uses this and in what context — 'developers' is not a user; a specific role with a specific workflow is." },
-      { name: "Development roadmap",            guidance: "Phases with milestones and feature sequencing — what ships in v1, what is deferred and why." },
+      { name: "Solution overview",              guidance: "How the product works at the user-facing level, distinct from the technical implementation." },
+      { name: "Key assumptions",                guidance: "Technical beliefs the design depends on: latency requirements, data volumes, API reliability, browser/device constraints." },
+      { name: "Architecture / technical approach", guidance: "Systems, stack, integrations, and key design decisions — with explicit rationale for choices made." },
       { name: "Dependencies",                   guidance: "External APIs, third-party services, data sources, and regulatory approvals the system relies on — with a risk rating for each." },
+      { name: "Development roadmap",            guidance: "Phases with milestones and feature sequencing — what ships in v1, what is deferred and why." },
       { name: "Scalability considerations",     guidance: "What breaks at 10× and 100× usage — the specific bottlenecks and the plan to address them." },
       { name: "Data privacy and security",      guidance: "How user data is stored, transmitted, and protected — especially critical for SaaS and AI products handling sensitive documents." },
       { name: "Regulatory considerations",      guidance: "Industry-specific constraints — GDPR, SOC2, HIPAA, or others — and whether compliance is required at launch or can be deferred." },
@@ -383,11 +386,13 @@ const DOC_MODES = {
       execution:       "This is a strategy or operations document. Focus on whether the operational plan is resourced correctly, whether owners are named for each initiative, and whether the timeline is realistic given current capacity.",
       competitive:     "This is a strategy or operations document. Consider how competitors will respond to the strategic moves described, and whether the strategy creates durable differentiation or is easily copied.",
       firstprinciples: "This is a strategy or operations document. Challenge whether the strategic choices are genuinely differentiated, whether the organisation has the capabilities to execute them, and whether the market opportunity is as durable as assumed.",
+      evidence:        "This is a strategy or operations document. Focus on whether strategic claims are grounded in measurable data — market share figures, customer retention rates, revenue trends, named competitor moves — or are projections dressed as facts. Strategy documents routinely cite internal optimism as market evidence.",
     },
     sections: [
       { name: "Executive summary",              guidance: "The core strategic argument in one page — what is being decided, why, and what it requires." },
       { name: "Strategic context",              guidance: "The market, competitive, and internal conditions that make this strategy necessary now." },
       { name: "Vision and objectives",          guidance: "Where the organisation is going and what it must achieve — specific enough to evaluate whether the strategy achieves it." },
+      { name: "Competitor analysis",            guidance: "How the competitive landscape is expected to evolve and how the strategy positions the organisation against it." },
       { name: "Key assumptions",                guidance: "Market and competitive beliefs the strategy depends on — explicitly stated so they can be monitored and revisited." },
       { name: "Strategic initiatives",          guidance: "The specific programmes or investments that execute the strategy — named, scoped, and sequenced." },
       { name: "Resource plan",                  guidance: "Budget and headcount allocation across initiatives — not just totals but the split between competing priorities." },
@@ -395,7 +400,6 @@ const DOC_MODES = {
       { name: "Timeline and milestones",        guidance: "A concrete schedule with quarterly checkpoints and named owners for each." },
       { name: "Dependencies and partnerships",  guidance: "External organisations or internal teams the strategy depends on — with a risk assessment for each." },
       { name: "Risk assessment",                guidance: "Strategic, operational, and market risks with specific mitigations and a named owner for each." },
-      { name: "Competitor analysis",            guidance: "How the competitive landscape is expected to evolve and how the strategy positions the organisation against it." },
       { name: "Success metrics",                guidance: "OKRs or KPIs with specific targets and review cadences — not aspirational statements but measurable outcomes." },
     ],
   },
@@ -408,15 +412,16 @@ const DOC_MODES = {
       execution:       "This is a developer project or README. Focus on adoption friction, onboarding complexity, maintenance sustainability, and whether a solo maintainer can realistically support this project as it grows.",
       competitive:     "This is a developer project or README. You are the maintainer of the most established competing open-source project or the product manager of the incumbent SaaS tool. Argue why developers will stick with what they have.",
       firstprinciples: "This is a developer project or README. Challenge whether this should be a library, a CLI tool, a SaaS product, or not built at all — and whether the monetisation path (if any) is coherent with how developers actually adopt tools.",
+      evidence:        "This is a developer project or README. Focus on whether pain is evidenced by observable developer behaviour — GitHub issue counts on related projects, Stack Overflow question volume, npm download trends for workaround packages, Reddit threads where developers express this frustration. A developer saying 'this is annoying' in a conversation is not evidence. A thousand Stack Overflow questions about the same problem is.",
     },
     sections: [
       { name: "Problem and use case",             guidance: "The specific developer pain being solved — with a concrete before/after scenario, not a generic description of what the tool does." },
       { name: "Target user",                      guidance: "Which developers, doing what — a 'backend engineer building payment integrations' is a user; 'developers' is not." },
       { name: "Solution overview",                guidance: "How the tool works at the usage level — a realistic example with real input and output, not a description of features." },
       { name: "Differentiation from alternatives", guidance: "Named competing tools, libraries, or approaches with an honest comparison — why would a developer choose this over the established option?" },
-      { name: "Installation and adoption path",   guidance: "The realistic steps to get from zero to working — including prerequisites, common failure modes, and what a new user experiences in the first 10 minutes." },
       { name: "Architecture / technical approach", guidance: "Key design decisions and constraints — especially anything that affects how the project can be extended or integrated." },
       { name: "Dependencies",                     guidance: "External packages, APIs, and runtime requirements — with versions and a note on stability." },
+      { name: "Installation and adoption path",   guidance: "The realistic steps to get from zero to working — including prerequisites, common failure modes, and what a new user experiences in the first 10 minutes." },
       { name: "Maintenance and sustainability",   guidance: "Who maintains this project, at what capacity, and what happens if the author becomes unavailable — especially important for projects others build on." },
       { name: "Contribution model",               guidance: "How the project grows beyond one person — issue triage process, PR conventions, and how contributors are onboarded." },
       { name: "Monetisation path",                guidance: "Whether this is intentionally free, open core, hosted SaaS, or sponsorship-funded — and whether that model is coherent with how the target users adopt tools." },
@@ -548,14 +553,60 @@ Ask and answer aggressively:
 
 ALTERNATIVES: Describe the version of this that you would actually back — what needs to change about the user, solution, approach, and go-to-market or adoption path. Be specific enough that someone could act on it immediately.`,
     },
+    {
+      id: "evidence", label: "E", name: "Evidence Archaeologist", color: "#E46B9F",
+      caller: callClaude,   // Claude — strong at structured research methodology
+      system: `${hints.evidence}
+
+You are a research methodologist and evidence sceptic. Your job is to assess the empirical foundations of this plan and return a structured validation strategy based entirely on observable public signals — no interviews, no surveys, no focus groups.
+
+Interviews are excluded because: small samples are statistically meaningless, respondents describe problems they think they have rather than problems that cost them money, and people are systematically helpful to anyone who asks — meaning interview data confirms whatever framing the founder brought in.
+
+## 1. Evidence audit
+Rate the quality of evidence currently in the document:
+- STRONG: cites specific numbers, named sources, observable behaviour (revenue, downloads, reviews, search volume, forum posts)
+- CIRCUMSTANTIAL: plausible but not directly observed (analogous markets, adjacent data, second-hand reports)
+- ASSERTION: stated as fact without citation ("founders struggle with X", "the market needs Y")
+
+List each claim in the document and rate it. Be specific about which claims are load-bearing and currently unsubstantiated.
+
+## 2. Validation strategy — specific actionable searches only
+For each major unsubstantiated claim, provide the exact research action that would confirm or deny it. Use only these methods:
+
+**Complaint mining:**
+- Reddit: exact search queries using site:reddit.com with specific subreddits and "I wish" / "why is there no" / "frustrated with" / "anyone else"
+- App Store / G2 / Trustpilot / Capterra reviews of named competitors — specific search terms to use
+- Twitter/X search operators for complaints about the problem domain
+- Hacker News: exact search at hn.algolia.com
+
+**Search demand signals:**
+- Google Trends: specific search terms to compare, expected trajectory if the problem is real
+- Keyword research: specific phrases to check volume for (problem-description language, not solution language)
+- Google autocomplete: specific starter phrases that reveal how people articulate the pain
+
+**Workaround archaeology:**
+- GitHub: specific search queries for repos, Gists, or issues that represent the workaround people use today
+- npm / PyPI / crates.io: packages people built to solve adjacent problems
+- Forum threads where people ask "how do you handle X without Y" — specific communities to check
+
+**Proxy demand signals:**
+- Job postings: specific job titles or skill requirements that would be unnecessary if this product existed
+- Template sharing: Notion templates, Airtable bases, Google Sheets shared publicly that solve this manually
+
+## 3. Strongest single validation signal
+Name the one observable signal that would, if found at scale, most convincingly confirm the problem exists. Explain specifically what threshold would constitute confirmation versus noise.
+
+## 4. Falsification test
+Name the one observable signal that, if absent, would most strongly suggest the problem is not real or not acute enough to pay for. Where exactly would you look for this signal?`,
+    },
   ];
 }
 
-const SYNTHESIS_SYSTEM = `You are a meta-analyst. You have received adversarial analyses from four specialist roles examining the same plan. Each role has also proposed alternatives.
+const SYNTHESIS_SYSTEM = `You are a meta-analyst. You have received adversarial analyses from five specialist roles examining the same plan. Each role has also proposed alternatives or validation actions.
 
 Return ONLY a valid JSON object — no preamble, no explanation, no markdown fences. Start with { and end with }.
 
-The JSON must have exactly these six fields:
+The JSON must have exactly these seven fields:
 
 {
   "high_confidence_objections": [
@@ -564,7 +615,7 @@ The JSON must have exactly these six fields:
       "roles": ["A"],
       "severity": "critical",
       "category": "assumption",
-      "recommended_action": "Specific concrete next step"
+      "recommended_action": "Specific concrete next step — never suggest customer interviews or surveys"
     }
   ],
   "unique_objections": [
@@ -592,17 +643,28 @@ The JSON must have exactly these six fields:
       "type": "strategic"
     }
   ],
+  "validation_actions": [
+    {
+      "claim": "The specific unvalidated claim this addresses",
+      "method": "complaint-mining | search-demand | workaround-archaeology | proxy-signal",
+      "action": "Exact search query, subreddit, platform, or data source to check — specific enough to execute in under 5 minutes",
+      "confirms_if": "What finding would confirm the claim",
+      "denies_if": "What absence or finding would suggest the claim is wrong"
+    }
+  ],
   "verdict": "3-4 sentences: overall assessment, most important risk, why multi-role found more than single-prompt would",
-  "next_action": "The single most important concrete action this week — specific enough to act on immediately"
+  "next_action": "The single most important concrete action this week. Must be specific and immediately executable. NEVER recommend customer interviews, user interviews, surveys, or focus groups — these produce biased confirmatory data. Instead recommend: mining specific complaint sources (named subreddits, competitor reviews on named platforms), checking specific search volume or Google Trends terms, finding workaround evidence on GitHub or forums, or a specific product/pricing/positioning change."
 }
 
 Field rules:
 - severity: "critical" | "significant" | "minor"
-- category: "assumption" | "execution" | "competitive" | "first-principles"
+- category: "assumption" | "execution" | "competitive" | "first-principles" | "evidence"
 - type: "cosmetic" | "strategic" | "pivot"
-- high_confidence_objections: only objections raised by 2+ roles
+- high_confidence_objections: only objections raised by 2+ roles (A, B, C, D, E)
 - unique_objections: only objections raised by exactly 1 role that are specific and non-generic
-- alternatives: all concrete alternatives proposed across all roles, deduplicated and grouped
+- validation_actions: consolidate the specific validation searches from Role E with any evidence gaps identified by other roles. Include 3–5 actions maximum, prioritised by how load-bearing the unvalidated claim is. Each action must be executable in under 5 minutes with a browser.
+- alternatives: all concrete alternatives proposed across all five roles, deduplicated and grouped
+- next_action: never interviews, never surveys, never focus groups — always an observable public signal or a concrete product change
 
 Be precise. No filler.`;
 
@@ -734,7 +796,7 @@ app.post("/api/analyse", async (req, res) => {
     return;
   }
 
-  // ── Call 6: Synthesis ──────────────────────────────────────────────────────
+  // ── Call 7: Synthesis ──────────────────────────────────────────────────────
   send("synthesis_start", { count: validRoles.length });
 
   const synthInput = validRoles
@@ -742,9 +804,9 @@ app.post("/api/analyse", async (req, res) => {
     .join("\n\n---\n\n");
 
   try {
-    const raw      = await callClaude(SYNTHESIS_SYSTEM, synthInput, 2500);
+    const raw      = await callClaude(SYNTHESIS_SYSTEM, synthInput, 3000);
     const parsed   = parseSynthesis(raw);
-    send("synthesis_complete", parsed); // { structured, data }
+    send("synthesis_complete", parsed);
   } catch (err) {
     logError("analyse/synthesis", err);
     send("synthesis_error", { error: err.message });
@@ -820,6 +882,7 @@ app.post("/api/export-pdf", async (req, res) => {
     { id:"execution",       label:"B", name:"Execution Sceptic" },
     { id:"competitive",     label:"C", name:"Competitive Threat Modeller" },
     { id:"firstprinciples", label:"D", name:"First Principles Challenger" },
+    { id:"evidence",        label:"E", name:"Evidence Archaeologist" },
   ];
 
   for (const r of ROLE_META_PDF) {
@@ -839,41 +902,68 @@ app.post("/api/export-pdf", async (req, res) => {
   if (synthesis?.structured && synthesis?.data) {
     const s = synthesis.data;
 
-    const SEV_LABEL = { critical:"● CRITICAL", significant:"◆ SIGNIFICANT", minor:"○ MINOR" };
+    // ASCII-only severity labels — pdfkit's built-in Helvetica is Latin-1;
+    // Unicode bullets/diamonds render as garbage (%i, %o etc.)
+    const SEV_LABEL = { critical:"[!!!] CRITICAL", significant:"[!] SIGNIFICANT", minor:"[ ] MINOR" };
+    const SEV_COL   = { critical:"#E05A4A", significant:"#BA7517", minor:COL.light };
 
     if (s.high_confidence_objections?.length) {
       h2("High-confidence objections");
       s.high_confidence_objections.forEach(o => {
-        doc.font("Helvetica-Bold").fontSize(9).fillColor(o.severity === "critical" ? "#E05A4A" : o.severity === "significant" ? "#BA7517" : COL.light)
-           .text(SEV_LABEL[o.severity] ?? o.severity.toUpperCase(), { continued: true });
-        doc.font("Helvetica-Bold").fontSize(9).fillColor(COL.light).text(`  ${o.category.toUpperCase()}  ·  Roles: ${o.roles.join(", ")}`);
-        doc.font("Helvetica").fontSize(10).fillColor(COL.text).text(o.objection, { lineGap: 2 });
-        doc.font("Helvetica").fontSize(9).fillColor(COL.mid).text(`→ ${o.recommended_action}`, { lineGap: 2 }).moveDown(0.5);
+        const sevText  = SEV_LABEL[o.severity] ?? o.severity.toUpperCase();
+        const catText  = `   ${(o.category ?? "").toUpperCase()}   Roles: ${(o.roles ?? []).join(", ")}`;
+        doc.font("Helvetica-Bold").fontSize(9)
+           .fillColor(SEV_COL[o.severity] ?? COL.light)
+           .text(sevText, { continued: true });
+        doc.font("Helvetica").fontSize(9)
+           .fillColor(COL.light)
+           .text(catText);
+        doc.font("Helvetica").fontSize(10).fillColor(COL.text).text(o.objection ?? "", { lineGap: 2 });
+        doc.font("Helvetica").fontSize(9).fillColor(COL.mid)
+           .text(`-> ${o.recommended_action ?? ""}`, { lineGap: 2 }).moveDown(0.5);
       });
     }
 
     if (s.unique_objections?.length) {
       doc.moveDown(0.5); h2("Unique objections");
       s.unique_objections.forEach(o => {
-        doc.font("Helvetica-Bold").fontSize(9).fillColor(COL.light).text(`Role ${o.role}`);
-        body(`${o.objection}\nWhy notable: ${o.why_notable}`);
+        doc.font("Helvetica-Bold").fontSize(9).fillColor(COL.light).text(`Role ${o.role ?? ""}`);
+        body(`${o.objection ?? ""}\nWhy notable: ${o.why_notable ?? ""}`);
       });
     }
 
     if (s.contradictions?.length) {
       doc.moveDown(0.5); h2("Contradictions");
       s.contradictions.forEach(c => {
-        doc.font("Helvetica-Bold").fontSize(10).fillColor(COL.text).text(c.summary).moveDown(0.2);
-        body(`Role ${c.role_a}: ${c.role_a_claim}\nRole ${c.role_b}: ${c.role_b_claim}`);
+        doc.font("Helvetica-Bold").fontSize(10).fillColor(COL.text).text(c.summary ?? "").moveDown(0.2);
+        body(`Role ${c.role_a ?? ""}: ${c.role_a_claim ?? ""}\nRole ${c.role_b ?? ""}: ${c.role_b_claim ?? ""}`);
       });
     }
 
     if (s.alternatives?.length) {
       doc.moveDown(0.5); h2("Alternatives");
       s.alternatives.forEach(a => {
-        doc.font("Helvetica-Bold").fontSize(10).fillColor(COL.text).text(`${a.name}  `, { continued: true });
-        doc.font("Helvetica").fontSize(9).fillColor(COL.light).text(`[${a.type}]  Proposed by: ${a.proposed_by.join(", ")}`);
-        body(`Solves: ${a.problem_solved}\nTrade-off: ${a.tradeoff}`);
+        doc.font("Helvetica-Bold").fontSize(10).fillColor(COL.text)
+           .text(`${a.name ?? ""}  `, { continued: true });
+        doc.font("Helvetica").fontSize(9).fillColor(COL.light)
+           .text(`[${a.type ?? ""}]  Proposed by: ${(a.proposed_by ?? []).join(", ")}`);
+        body(`Solves: ${a.problem_solved ?? ""}\nTrade-off: ${a.tradeoff ?? ""}`);
+      });
+    }
+
+    if (s.validation_actions?.length) {
+      doc.moveDown(0.5); h2("Validation strategy");
+      s.validation_actions.forEach((v, i) => {
+        doc.font("Helvetica-Bold").fontSize(9).fillColor("#E46B9F")
+           .text(`${i + 1}. [${(v.method ?? "").replace(/-/g, " ").toUpperCase()}]`, { continued: true });
+        doc.font("Helvetica").fontSize(9).fillColor(COL.light)
+           .text(`  ${v.claim ?? ""}`);
+        doc.font("Helvetica").fontSize(9).fillColor(COL.mid)
+           .text(`Action: ${v.action ?? ""}`, { lineGap: 2 });
+        doc.font("Helvetica").fontSize(8).fillColor("#4ABA7A")
+           .text(`Confirms if: ${v.confirms_if ?? ""}`, { lineGap: 1 });
+        doc.font("Helvetica").fontSize(8).fillColor("#E05A4A")
+           .text(`Denies if:   ${v.denies_if ?? ""}`, { lineGap: 1 }).moveDown(0.5);
       });
     }
 
@@ -883,7 +973,8 @@ app.post("/api/export-pdf", async (req, res) => {
     }
     if (s.next_action) {
       h2("Recommended next action");
-      doc.font("Helvetica-Bold").fontSize(11).fillColor(COL.purple).text(s.next_action, { lineGap: 3 });
+      doc.font("Helvetica-Bold").fontSize(11).fillColor(COL.purple)
+         .text(s.next_action, { lineGap: 3 });
     }
   } else {
     // prose fallback

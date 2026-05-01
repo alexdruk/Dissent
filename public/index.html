@@ -917,6 +917,45 @@
     .alt-body strong { color: var(--text); font-weight: 500; }
     .alt-by { font-size: 10px; color: var(--text3); margin-left: auto; flex-shrink: 0; }
 
+    .val-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid #E46B9F;
+      border-radius: 0 var(--rl) var(--rl) 0;
+      padding: 11px 14px; margin-bottom: 8px;
+    }
+    .val-claim {
+      font-size: 11px; color: var(--text3);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .val-method {
+      display: inline-block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      padding: 2px 8px; border-radius: 20px;
+      background: rgba(228,107,159,0.10);
+      border: 1px solid rgba(228,107,159,0.28);
+      color: #E46B9F; margin-bottom: 7px;
+    }
+    .val-action {
+      font-size: 12.5px; color: var(--text);
+      font-family: 'Courier New', monospace;
+      background: var(--surface2); border-radius: var(--r);
+      padding: 6px 10px; margin-bottom: 8px;
+      word-break: break-all; line-height: 1.5;
+    }
+    .val-signals { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .val-signal { background: var(--surface2); border-radius: var(--r); padding: 7px 10px; }
+    .val-signal-label {
+      font-size: 10px; font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; letter-spacing: 0.08em; margin-bottom: 3px;
+    }
+    .val-signal-label.confirms { color: var(--success); }
+    .val-signal-label.denies   { color: var(--danger); }
+    .val-signal-text { font-size: 12px; color: var(--text2); }
+
     .verdict-box {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -1294,6 +1333,7 @@ const ROLE_META = [
   { id:"execution",       label:"B", name:"Execution Sceptic",             color:"#E47B6B" },
   { id:"competitive",     label:"C", name:"Competitive Threat Modeller",   color:"#E4AD6B" },
   { id:"firstprinciples", label:"D", name:"First Principles Challenger",   color:"#7BE4B8" },
+  { id:"evidence",        label:"E", name:"Evidence Archaeologist",        color:"#E46B9F" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1846,6 +1886,15 @@ function synthesisToText(s) {
     t += "ALTERNATIVES\n";
     s.alternatives.forEach(a => t += `${a.name} [${a.type}] — Proposed by: ${a.proposed_by?.join(", ")}\n  Solves: ${a.problem_solved}\n  Trade-off: ${a.tradeoff}\n\n`);
   }
+  if (s.validation_actions?.length) {
+    t += "VALIDATION STRATEGY\n";
+    s.validation_actions.forEach((v, i) => {
+      t += `${i+1}. [${(v.method ?? "").replace(/-/g," ").toUpperCase()}] ${v.claim ?? ""}\n`;
+      t += `   Action: ${v.action ?? ""}\n`;
+      t += `   Confirms if: ${v.confirms_if ?? ""}\n`;
+      t += `   Denies if:   ${v.denies_if ?? ""}\n\n`;
+    });
+  }
   if (s.verdict)      t += `VERDICT\n${s.verdict}\n\n`;
   if (s.next_action)  t += `NEXT ACTION\n${s.next_action}\n`;
   return t;
@@ -1971,6 +2020,33 @@ function renderStructuredSynthesis(s) {
         </div>
         <div class="alt-body">
           <strong>Solves:</strong> ${esc(a.problem_solved||"")}  ·  <strong>Trade-off:</strong> ${esc(a.tradeoff||"")}
+        </div>`;
+      sec.appendChild(card);
+    });
+    wrap.appendChild(sec);
+  }
+
+  // ── Validation actions (from Role E + synthesis) ───────────────────────────
+  if (s.validation_actions?.length) {
+    const sec = document.createElement("div");
+    sec.innerHTML = `<div class="sdash-section-title">Validation strategy — ${s.validation_actions.length} action${s.validation_actions.length !== 1 ? "s" : ""}</div>`;
+    s.validation_actions.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "val-card";
+      const methodLabel = (v.method ?? "").replace(/-/g, " ");
+      card.innerHTML = `
+        <div class="val-claim">${esc(v.claim ?? "")}</div>
+        <div class="val-method">${esc(methodLabel)}</div>
+        <div class="val-action">${esc(v.action ?? "")}</div>
+        <div class="val-signals">
+          <div class="val-signal">
+            <div class="val-signal-label confirms">✓ CONFIRMS IF</div>
+            <div class="val-signal-text">${esc(v.confirms_if ?? "")}</div>
+          </div>
+          <div class="val-signal">
+            <div class="val-signal-label denies">✗ DENIES IF</div>
+            <div class="val-signal-text">${esc(v.denies_if ?? "")}</div>
+          </div>
         </div>`;
       sec.appendChild(card);
     });
