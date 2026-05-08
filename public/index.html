@@ -379,6 +379,20 @@
     .rchip.running .rchip-ind { animation: blink 1.1s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
 
+    #btn-view-results {
+      width: 100%;
+      background: var(--accent); color: #0B0B0C;
+      border: none; border-radius: var(--rl);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 17px;
+      letter-spacing: 0.05em;
+      padding: 15px; cursor: pointer;
+      transition: opacity .15s;
+      animation: fadeIn .4s ease;
+    }
+    #btn-view-results:hover { opacity: 0.88; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
     .synth-chip {
       display: flex; align-items: center; gap: 14px;
       background: var(--surface);
@@ -427,8 +441,41 @@
     }
     .btn-new:hover { color: var(--text); border-color: var(--text2); }
 
+    /* ── Pinned synthesis tab row ── */
+    .synth-tab-row {
+      max-width: 960px; margin: 16px auto 0;
+      padding: 0 28px;
+    }
+    .synth-tab-btn {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--rl);
+      padding: 11px 18px;
+      cursor: pointer;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600; font-size: 15px;
+      letter-spacing: 0.03em;
+      color: var(--text2);
+      transition: border-color .15s, color .15s, background .15s;
+      text-align: left;
+    }
+    .synth-tab-btn:hover { border-color: var(--border2); color: var(--text); }
+    .synth-tab-btn.on {
+      border-color: rgba(180,107,228,0.45);
+      background: rgba(180,107,228,0.07);
+      color: var(--col-s);
+    }
+    .synth-tab-diamond { font-size: 16px; flex-shrink: 0; }
+    .synth-tab-hint {
+      font-size: 11px; font-weight: 400;
+      color: var(--text3); margin-left: auto; letter-spacing: 0.04em;
+    }
+    .synth-tab-btn.on .synth-tab-hint { color: rgba(180,107,228,0.5); }
+
     .tab-bar {
-      max-width: 960px; margin: 20px auto 0;
+      max-width: 960px; margin: 8px auto 0;
       padding: 0 28px;
       display: flex; gap: 2px;
       border-bottom: 1px solid var(--border);
@@ -1160,14 +1207,14 @@
          ondragover="onDragOver(event)"
          ondragleave="onDragLeave(event)"
          ondrop="onDrop(event)">
-      <input type="file" id="file-input" accept=".txt,.md,.pdf,.docx" onchange="onFileChosen(event)">
+      <input type="file" id="file-input" accept=".txt,.md,.html,.pdf,.docx" onchange="onFileChosen(event)">
 
       <!-- idle state -->
       <div class="dz-idle">
         <div class="dz-icon">↑</div>
         <div class="dz-label">Drop file here or click to browse</div>
         <div class="dz-hint">
-          <strong>.pdf &nbsp;·&nbsp; .docx &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .md</strong><br>
+          <strong>.pdf &nbsp;·&nbsp; .docx &nbsp;·&nbsp; .html &nbsp;·&nbsp; .txt &nbsp;·&nbsp; .md</strong><br>
           Max 5 MB &nbsp;·&nbsp; Text is extracted and shown in the editor before analysis
         </div>
       </div>
@@ -1281,7 +1328,7 @@
 <div id="stage-analysing" class="stage">
   <div class="run-inner">
     <div class="run-eyebrow">Running adversarial panel</div>
-    <h2 class="run-title">Four analysts attacking your plan</h2>
+    <h2 class="run-title" id="run-title">Four analysts attacking your plan</h2>
     <div class="rchips" id="rchips"></div>
     <div class="synth-chip" id="synth-chip">
       <div class="synth-icon">◆</div>
@@ -1289,6 +1336,9 @@
         <div class="synth-name">Synthesis — Meta-Analyst</div>
         <div class="synth-st" id="synth-st">Waiting for roles to complete…</div>
       </div>
+    </div>
+    <div id="btn-view-results-wrap" style="display:none; margin-top:22px;">
+      <button id="btn-view-results" onclick="showStage('results')">View analysis results →</button>
     </div>
   </div>
 </div>
@@ -1298,9 +1348,17 @@
   <div class="res-hdr">
     <div>
       <h2 class="res-title">Analysis complete</h2>
-      <div class="res-meta" id="res-meta">4 roles completed</div>
+      <div class="res-meta" id="res-meta">5 roles completed</div>
     </div>
     <button class="btn-new" onclick="resetAll()">↺ New analysis</button>
+  </div>
+  <!-- Synthesis pinned above the role tabs — always visible, always first -->
+  <div class="synth-tab-row">
+    <button class="synth-tab-btn on" id="tb-synthesis" onclick="switchTab('synthesis')">
+      <span class="synth-tab-diamond">◆</span>
+      Synthesis — Meta-Analysis
+      <span class="synth-tab-hint">cross-role findings</span>
+    </button>
   </div>
   <div class="tab-bar" id="tab-bar"></div>
   <div class="tab-panels" id="tab-panels"></div>
@@ -1362,6 +1420,8 @@ function resetAll() {
   document.getElementById("btn-gap-submit").disabled = false;
   document.getElementById("sdoc-body").textContent = "";
   document.getElementById("sdoc-additions").innerHTML = "";
+  document.getElementById("btn-view-results-wrap").style.display = "none";
+  document.getElementById("run-title").textContent = "Four analysts attacking your plan";
   document.getElementById("tab-bar").innerHTML = "";
   document.getElementById("tab-panels").innerHTML = "";
   setDropZoneState("idle");
@@ -1600,6 +1660,8 @@ function buildRunUI() {
   });
   document.getElementById("synth-chip").className = "synth-chip";
   document.getElementById("synth-st").textContent  = "Waiting for roles to complete…";
+  document.getElementById("btn-view-results-wrap").style.display = "none";
+  document.getElementById("run-title").textContent = "Four analysts attacking your plan";
 
   // ── Pre-build result tab panels so streaming tokens can flow into them ─────
   roleBuffers = {};
@@ -1628,14 +1690,7 @@ function buildRunUI() {
     tabPanels.appendChild(panel);
   });
 
-  // Synthesis tab
-  const sBtn = document.createElement("button");
-  sBtn.className = "tbtn on"; sBtn.id = "tb-synthesis";
-  sBtn.style.setProperty("--tc", "#B46BE4");
-  sBtn.onclick = () => switchTab("synthesis");
-  sBtn.innerHTML = `<span class="tbtn-letter">◆</span>Synthesis`;
-  tabBar.appendChild(sBtn);
-
+  // Synthesis tab is now a static pinned button in the HTML — just wire the panel
   const sPanel = document.createElement("div");
   sPanel.className = "tpanel on synth-panel"; sPanel.id = "tp-synthesis";
   sPanel.innerHTML = `
@@ -1647,6 +1702,10 @@ function buildRunUI() {
       <p style="color:var(--text3)">Waiting for adversarial roles to complete…</p>
     </div>`;
   tabPanels.appendChild(sPanel);
+
+  // Reset the static synthesis button to its default (active) state
+  const sBtnStatic = document.getElementById("tb-synthesis");
+  if (sBtnStatic) sBtnStatic.className = "synth-tab-btn on";
 }
 
 function setChip(id, state, msg) {
@@ -1727,7 +1786,7 @@ function onEvent(ev, d) {
 
     case "synthesis_start":
       document.getElementById("synth-chip").className = "synth-chip running";
-      document.getElementById("synth-st").textContent  = "Synthesising all analyses…";
+      document.getElementById("synth-st").textContent  = "Synthesising all four analyses…";
       break;
 
     case "synthesis_complete":
@@ -1765,11 +1824,25 @@ function onEvent(ev, d) {
         synthOutput: synthOutput,
         enrichedDoc: enrichedDoc,
       });
-      if (document.getElementById("stage-synth-doc").classList.contains("active")) {
-        showStage("analysing");
-        setTimeout(() => showStage("results"), 1800);
+      buildResults();
+      // Show the "View analysis results" button — user navigates manually.
+      // If currently on the analysing stage, reveal the button there.
+      // If on synth-doc, show it there too via the existing "Run adversarial panel" button swap.
+      if (document.getElementById("stage-analysing").classList.contains("active")) {
+        document.getElementById("btn-view-results-wrap").style.display = "block";
+        document.getElementById("run-title").textContent = "Analysis complete";
+      } else if (document.getElementById("stage-synth-doc").classList.contains("active")) {
+        // Swap "Run adversarial panel" button to "View results"
+        const continueBtn = document.querySelector(".btn-sdoc-continue");
+        if (continueBtn) {
+          continueBtn.textContent = "View analysis results →";
+          continueBtn.onclick = () => showStage("results");
+        }
       } else {
-        showStage("results");
+        // Any other stage — show the analysing stage with the button ready
+        showStage("analysing");
+        document.getElementById("btn-view-results-wrap").style.display = "block";
+        document.getElementById("run-title").textContent = "Analysis complete";
       }
       break;
 
@@ -1838,10 +1911,18 @@ function proceedToAnalysis() {
 function buildResults() {} // no-op — tabs pre-built in buildRunUI()
 
 function switchTab(id) {
+  // Role tab buttons (dynamic, in .tab-bar)
   document.querySelectorAll(".tbtn").forEach(b  => b.classList.remove("on"));
   document.querySelectorAll(".tpanel").forEach(p => p.classList.remove("on"));
-  document.getElementById("tb-" + id).classList.add("on");
-  document.getElementById("tp-" + id).classList.add("on");
+
+  // Static synthesis button (pinned above the tab bar)
+  const sBtnStatic = document.getElementById("tb-synthesis");
+  if (sBtnStatic) sBtnStatic.className = "synth-tab-btn" + (id === "synthesis" ? " on" : "");
+
+  const dynBtn = document.getElementById("tb-" + id);
+  if (dynBtn) dynBtn.classList.add("on");
+  const panel = document.getElementById("tp-" + id);
+  if (panel) panel.classList.add("on");
 }
 
 async function copyTab(id, btn) {
@@ -2233,7 +2314,7 @@ function setDropZoneState(state, msg) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Client-side pre-validation (mirrors server rules — server always re-validates)
-const ALLOWED_EXTS = new Set([".txt", ".md", ".pdf", ".docx"]);
+const ALLOWED_EXTS = new Set([".txt", ".md", ".html", ".pdf", ".docx"]);
 const MAX_BYTES    = 5 * 1024 * 1024;
 
 function clientValidate(file) {
@@ -2241,7 +2322,7 @@ function clientValidate(file) {
   const dot  = name.lastIndexOf(".");
   const ext  = dot >= 0 ? name.slice(dot).toLowerCase() : "";
   if (!ALLOWED_EXTS.has(ext))
-    return `File type not allowed. Please upload a .pdf, .docx, .txt, or .md file.`;
+    return `File type not allowed. Please upload a .pdf, .docx, .html, .txt, or .md file.`;
   if (file.size > MAX_BYTES)
     return `File is too large (${(file.size/1024/1024).toFixed(1)} MB). Maximum is 5 MB.`;
   if (file.size === 0)
@@ -2283,7 +2364,8 @@ async function processFile(file) {
 
   // 4. Auto-select the most relevant document mode based on file extension
   const ext = (file.name.split(".").pop() || "").toLowerCase();
-  if (ext === "md") selectMode("readme");
+  if (ext === "md")   selectMode("readme");
+  if (ext === "html") selectMode("technical");
 
   // 5. Show done state
   const wc   = ta.value.trim().split(/\s+/).filter(Boolean).length;
@@ -2413,6 +2495,9 @@ function restoreSession(index) {
   }
   document.getElementById("res-meta").textContent =
     `Restored · ${esc(s.modeName ?? s.mode)} · ${new Date(s.date).toLocaleDateString("en-GB")}`;
+  // Reset static synthesis button
+  const sBtnStatic = document.getElementById("tb-synthesis");
+  if (sBtnStatic) sBtnStatic.className = "synth-tab-btn on";
   showStage("results");
 }
 

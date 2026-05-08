@@ -21,7 +21,7 @@ app.use(express.static(join(__dirname, "public")));
 const UPLOAD_MAX_BYTES    = 5 * 1024 * 1024;   // 5 MB — hard cap enforced by multer
 const EXTRACTED_MAX_CHARS = 60_000;             // matches text-paste limit
 const EXTRACTED_MIN_CHARS = 50;
-const ALLOWED_EXTENSIONS  = new Set([".txt", ".md", ".pdf", ".docx"]);
+const ALLOWED_EXTENSIONS  = new Set([".txt", ".md", ".html", ".pdf", ".docx"]);
 
 // Magic byte signatures — catches files renamed to a different extension.
 // .txt and .md have no universal signature; we validate them as UTF-8 instead.
@@ -65,7 +65,7 @@ function multerErrorHandler(err, _req, res, next) {
   if (err?.code === "LIMIT_FILE_SIZE")
     return res.status(413).json({ error: "File too large — maximum 5 MB." });
   if (err?.message === "INVALID_TYPE")
-    return res.status(400).json({ error: "File type not allowed. Upload .txt, .md, .pdf, or .docx." });
+    return res.status(400).json({ error: "File type not allowed. Upload .txt, .md, .html, .pdf, or .docx." });
   next(err);
 }
 
@@ -125,6 +125,18 @@ app.post("/api/extract", upload.single("file"), multerErrorHandler, async (req, 
     if (ext === ".txt" || ext === ".md") {
       // Decode as UTF-8; Node replaces invalid sequences with the replacement character
       text = buffer.toString("utf8");
+    } else if (ext === ".html") {
+      // Strip HTML tags, decode entities, collapse whitespace → plain text
+      text = buffer.toString("utf8")
+        .replace(/<script[\s\S]*?<\/script>/gi, "")   // remove scripts entirely
+        .replace(/<style[\s\S]*?<\/style>/gi, "")     // remove styles entirely
+        .replace(/<!--[\s\S]*?-->/g, "")              // remove comments
+        .replace(/<br\s*\/?>/gi, "\n")                // br → newline
+        .replace(/<\/?(p|div|h[1-6]|li|tr|td|th|section|article|header|footer|blockquote)[^>]*>/gi, "\n")
+        .replace(/<[^>]+>/g, "")                      // strip remaining tags
+        .replace(/&amp;/g, "&").replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">").replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'").replace(/&nbsp;/g, " ");
     } else if (ext === ".pdf") {
       // PDFParse v2: pass buffer via constructor, limit to first 50 pages
       const parser = new PDFParse({ data: buffer, verbosity: 0 });
